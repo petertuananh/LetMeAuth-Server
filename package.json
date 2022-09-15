@@ -1,0 +1,26 @@
+{
+  "name": "let-me-auth",
+  "version": "1.0.0",
+  "description": "A Login API",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/petertuananhdev/LetMeAuth.git"
+  },
+  "keywords": [
+    "auth",
+    "api",
+    "login",
+    "api"
+  ],
+  "author": "Peter Tuan Anh",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/petertuananhdev/LetMeAuth/issues"
+  },
+  "homepage": "https://github.com/petertuananhdev/LetMeAuth#readme"
+}
