@@ -1,0 +1,28 @@
+<%- include("../partials/header")%>
+<body>
+    <!-- partial:index.partial.html -->
+    <div class="login-form">
+        <form method="post" action="/application/create">
+            <h1>Create new application</h1>
+            <div class="content">
+                <div class="input-field">
+                    <input type="text" name="name" placeholder="Name" autocomplete="nope">
+                </div>
+            </div>
+            <div class="action">
+                <button type="submit">Create</button>
+            </div>
+        </form>
+    </div>
+    <!-- partial -->
+    <script src="/assets/js/login.js"></script>
+
+</body>
+
+</html>
+<script>
+    if ('<%= msg %>') {
+        alert('<%= msg %>')
+    }
+</script>
+<%- include("../partials/footer")%>

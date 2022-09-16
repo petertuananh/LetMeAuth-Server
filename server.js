@@ -7,6 +7,10 @@ const config = require("./config.json")
 const mysql = require("mysql");
 const crypto = require("crypto")
 const twofactor = require("node-2fa");
+var expressSession = require('express-session');
+var passport = require('passport');
+var passportLocal = require('passport-local');
+
 const mysqlInfo = {
     host: config.database.mysql.host,
     user: config.database.mysql.user,
@@ -29,141 +33,177 @@ app.use(bodyParser.json());
 app.use(bodyParser.raw()); app.set('view engine', 'ejs');
 const dataDir = path.resolve(`${process.cwd()}${path.sep}views`);
 app.use("/assets", express.static(path.resolve(`${dataDir}${path.sep}assets`)));
-
+app.use(expressSession({ secret: '#@*#&%#%^%#$##@*#&%#%^%#$##@*#&%#%^%#$#' }))
+app.use(passport.initialize());
+app.use(passport.session());
 // raw
-const scopes = [
-    "email",
-    "identify"
-]
+var scopes = ['identify', 'email', 'guilds', 'guilds.join', 'guilds.members.read'];
+var prompt = 'consent'
 
-// routes
-
-
-// portal
-app.get("/portal", checkAuth, async (req, res) => {
-    res.send("hi")
-})
-
-app.get("/signup", async (req, res) => {
-    return res.render("pages/signup")
-})
-app.post("/signup", async (req, res) => {
-    const data = req.body
-    if (!data.name) return res.json({ code : 400, msg : "Missing application name!" })
-    if (!data.email) return res.json({ code : 400, msg : "Missing email addess!" })
-    if (!data.username) return res.json({ code : 400, msg : "Missing username!" })
-    if (!data.password) return res.json({ code : 400, msg : "Missing password!" })
-    con.query(`SELECT * FROM ${data.name}`,async function (err, result) {
-        if (result) return res.json({ code : 400, msg : "This application has been defined!" })
-        const user_id = makeInt(17)
-        const app_id = makeInt(17)
-        con.query(`CREATE TABLE IF NOT EXISTS ${data.name} (id TEXT NOT NULL, flags TEXT NOT NULL, email TEXT NOT NULL, username TEXT NOT NULL, token TEXT NOT NULL, 2fa TEXT NOT NULL, createAT TEXT NOT NULL, avatar TEXT NOT NULL, banner TEXT NOT NULL, color TEXT NOT NULL)`,d => {
-            const token = makeToken({ id : user_id , password : data.password, app_id : app_id })
-            con.query(`INSERT INTO ${data.name}(id, flags, email, username, token, 2fa, createAT, avatar, banner, color) VALUES (${user_id}, "['admin']", "${data.email}", "${data.username}", "${token}", "", ${Date.now()}, "", "", "")`)
-            con.query(`INSERT INTO application(id, name, createAT, icon) VALUES (${app_id}, "${data.name}", ${Date.now()}, "")`)
-        })
-    })
-})
-app.get("/login", async (req, res) => {
-    return res.render(`pages/login`, {
-        appShowEnter : req.query.application_id ? false : true
-    })
-})
-app.get("/oauth2/checktoken", async (req, res) => {
-    const query = req.query
-    if (!query.token) return res.json({ code : 400, msg : "Invalid token!" })
-    if (!query.application_id) return res.json({ code : 400, msg : "Invalid application id!" })
-    con.query(`SELECT * FROM application WHERE id=${query.application_id} `,async function (err, res1) {
-        if (!res1[0]) return res.json({ code : 400, msg : "Unknown application!" })
-        con.query(`SELECT * FROM ${res1[0].name} WHERE token="${query.token}"`,async function (err, res2) {
-            if (!res2[0]) return res.json({ code : 400, msg : "Can not find this user!" })
-            const rawData = {
-                id : res2[0].id,
-                flags : res2[0].flags,
-                email : res2[0].email,
-                username : res2[0].username,
-                // 2fa : res2[0].2fa
-                createAT : res2[0].createAT,
-                avatar : res2[0].avatar,
-                banner : res2[0].banner,
-                color : res2[0].color
-            }
-            return res.json(rawData)
-        })
-    })
-})
-app.get("/oauth2/authorize", async (req, res) => {
-    const query = req.query
-    const app_id = query.application_id
-    if (!query.redirect) {
-        return res.json({ code : 400, msg : "Invalid redirect url!" })
-    // if (!scopes.includes(query.scope)) {
-    //     return res.json({ code : 400, msg : "Invalid scope!" })
-    } else {
-        con.query(`SELECT * FROM application WHERE id=${app_id} `,async function (err, res1) {
-            if (!res1[0]) return res.json({ code : 400, msg : "Unknown application!" })
-            return res.render("pages/authorize")
+passport.use('letmeauth', new passportLocal.Strategy(
+    function (username, password, done) {
+        con.query(`SELECT * FROM USER WHERE email="${username}"`,async function (err, user) {
+            if (!user[0]) return done(null, false, { message: 'Incorrect username or password.' })
+            const tokenInput = makeToken({ id : user[0].id, password : password })
+            if (tokenInput !== user[0].token) return done(null, false, { message: 'Incorrect username or password.' })
+            return done(null, user[0])
         })
     }
+));
+
+passport.serializeUser((user, done) => {
+    done(null, user)
 })
-app.post("/oauth2/authorize", async (req, res) => {
+
+passport.deserializeUser(function (user, done) {
+    done(null, user);
+});
+app.post('/auth/callback',
+    passport.authenticate('letmeauth', { 
+        failureRedirect: '/auth/login',
+        failureMessage: true
+    }),function(req, res) {
+        res.redirect(req.cookies.redirect ? req.cookies.redirect : '/');
+});
+
+app.get("/auth/login", async (req, res) => {
+    res.render("pages/auth/login", {
+        msg : req.session.messages || 'no'
+    })
+});
+
+app.get("/register", async (req, res) => {
+    res.render("pages/auth/register", { msg : null })
+});
+app.post("/register", async (req, res) => {
+    const data = req.body
+    con.query(`SELECT * FROM USER WHERE email="${data.email}"`,async function (err, email) {
+        if (email[0]) return res.render("pages/auth/register", { msg : "This email is aready in use!" })
+        con.query(`SELECT * FROM USER WHERE username="${data.username}"`,async function (err, username) {
+            if (username[0]) return res.render("pages/auth/register", { msg : "This username is aready in use!" })
+            const user_id = makeInt(17)
+            const token = makeToken({ id : user_id , password : data.password })
+            con.query(`INSERT INTO USER(id, flags, email, username, token, 2fa, createAT, avatar, banner, color) VALUES (${user_id}, "", "${data.email}", "${data.username}", "${token}", "", ${Date.now()}, "", "", "")`)
+        })
+    })
+});
+app.get("/oauth2/checktoken", async (req, res) => {
     const query = req.query
-    const app_id = query.application_id
-    if (!query.redirect) {
-        return res.json({ code : 400, msg : "Invalid redirect url!" })
-    // if (!scopes.includes(query.scope)) {
-    //     return res.json({ code : 400, msg : "Invalid scope!" })
+    if (!query.app_id) {
+        return res.send("Unknown application!")
+    } else if (!query.token) {
+        return res.send("Unknown token!")
     } else {
-        
-        con.query(`SELECT * FROM application WHERE id=${app_id} `,async function (err, res1) {
-            if (!res1[0]) return res.json({ code : 400, msg : "Unknown application!" })
-            
-            con.query(`SELECT * FROM ${res1[0].name} WHERE email="${req.body.email}"`,async function (err, res2) {
-                if (!res2[0]) return res.json({ code : 400, msg : "Can not find this user!" })
-                const tokenInput = makeToken({ id : res2[0].id, password : req.body.password, app_id : res1[0].id })
-                if (tokenInput !== res2[0].token) return res.json({ code : 400, msg : "Invalid email or password!" })
-                return res.redirect(`${query.redirect}?token=${res2[0].token}`)
+        con.query(`SELECT * FROM APPLICATION WHERE id="${query.app_id}"`,async function (err, application) {
+            if (!application[0]) return res.send("Unknown application!")
+            con.query(`SELECT * FROM ACCESS_TOKEN WHERE access_token="${query.token}"`,async function (err, access_token) {
+                if (!access_token[0]) return res.send("Unknown token!")
+                con.query(`SELECT * FROM USER WHERE id="${access_token[0].user_id}"`,async function (err, user) {
+                    if (!user[0]) return res.send("Unknown user!")
+                    return res.json(user[0])
+                })
             })
         })
     }
 })
+app.post("/oauth2/authorized", checkAuth, async (req, res) => {
+    const query = req.query
+    if (!query.app_id) {
+        return res.send("Unknown application!")
+    } else if (!query.redirect_url) {
+        return res.send("Unknown redirect url!")
+    } else {
+        con.query(`SELECT * FROM APPLICATION WHERE id="${query.app_id}"`,async function (err, application) {
+            if (!application[0]) return res.send("Unknown application!")
+            const access_token = makeTokenApp({ id : req.user.id, app_id : application[0].id })
+            con.query(`INSERT INTO ACCESS_TOKEN(user_id, app_id, createAT, access_token) VALUES (${req.user.id}, ${application[0].id}, ${Date.now()}, "${access_token}")`)
+            return res.redirect(`${query.redirect_url}?token=${access_token}`)
+        })
+    }
+})
+app.get("/oauth2/authorize", checkAuth, async (req, res) => {
+    const query = req.query
+    if (!query.app_id) {
+        return res.send("Unknown application!")
+    } else if (!query.redirect_url) {
+        return res.send("Unknown redirect url!")
+    } else {
+        con.query(`SELECT * FROM APPLICATION WHERE id="${query.app_id}"`,async function (err, application) {
+            if (!application[0]) return res.send("Unknown application!")
+            res.render("pages/oauth2/authorize", {
+                app_id : application[0].id,
+                app_name : application[0].name,
+                msg : null,
+                callback_url : query.redirect_url,
+                app_icon : application[0].icon
+            })
+        })
+    }
+});
+app.get("/application", checkAuth, async (req, res) => {
+    res.render("pages/application/apps", { msg : req.query.msg })
+})
 
+app.post("/application/create", checkAuth, async (req, res) => {
+    const data = req.body
+    con.query(`SELECT * FROM APPLICATION WHERE name="${data.name}"`,async function (err, application) {
+        if (application[0]) return res.redirect("/application?msg='This application name aready registered!'")
+        const app_id = makeInt(17)
+        await con.query(`DELETE FROM PERMISSION WHERE user_id=${req.user.id} && app_id=${app_id}`)
+        con.query(`INSERT INTO APPLICATION(id, name, createAT, icon, redirect_url, icon_url, allow_authorize) VALUES (${app_id}, "${data.name}", ${Date.now()}, "", "", "", "true")`)
+        con.query(`INSERT INTO PERMISSION(user_id, app_id, permission) VALUES (${req.user.id}, ${app_id}, 8)`)
+        return res.redirect(`/application/${app_id}/overview`)
+    })
+})
 
-// functions
+app.get("/application/:app_id/:target", checkAuth, async (req, res) => {
+    const app_id = req.params.app_id
+    con.query(`SELECT * FROM APPLICATION WHERE id=${app_id}`,async function (err, application) {
+        if (!application[0]) return res.redirect("/application?msg='Can't find this application!'")
+        con.query(`SELECT * FROM PERMISSION WHERE user_id=${req.user.id} && app_id=${app_id}`,async function (err, perm) {
+            if (!perm[0]) return res.redirect("/application?msg='You don't have permission to manage this applicstion!'")
+            if (parseInt(perm[0]) < 8) return res.redirect("/application?msg='You don't have permission to manage this applicstion!'")
+            if (req.params.target == 'overview') {
+                return res.render("pages/application/overview")
+            } else if (req.params.target == 'perms') {
+
+            } else {
+                return res.redirect(`/application/${app_id}/overview`)
+            }
+        })
+    })
+});
 async function checkAuth(req, res, next) {
-    // const token = req.cookies.token
-    // if (!token) return res.redirect(`/login${req.query.application_id ? `?application_id=${req.query.application_id}` : ''}`)
-    // const app_id = req.query.application_id
-    // con.query(`SELECT * FROM application WHERE id=${app_id} `,async function (err, res1) {
-    //     if (!res1[0]) return res.json({ code : 400, msg : "Unknown application!" })
-    //     con.query(`SELECT * FROM ${res[0].name} WHERE token=${token}`,async function (err, res2) {
-    //         if (!res2[0]) return res.redirect(`/login${req.query.application_id ? `?application_id=${req.query.application_id}` : ''}`)
-    //         return next()
-    //     })
-    // })
+    if (req.isAuthenticated()) return next()
+    res.cookie("redirect", req.url)
+    return res.redirect("/auth/login")
 }
-
+// functions
 function makeString(length) {
-    var result           = '';
-    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    var result = '';
+    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     var charactersLength = characters.length;
-    for ( var i = 0; i < length; i++ ) {
-    result += characters.charAt(Math.floor(Math.random() * 
-        charactersLength));
+    for (var i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() *
+            charactersLength));
     }
     return result;
 }
 function makeToken(target) {
-    const token = crypto.createHmac("sha256", `${target.id}-${target.password}-${target.app_id}-#@*#&%#%^%#$#`).update(`${target.id}-${target.password}-${target.app_id}-#@*#&%#%^%#$#`).digest("hex");
+    const token = crypto.createHmac("sha256", `${target.id}-${target.password}-#@*#&%#%^%#$#`).update(`${target.id}-${target.password}-#@*#&%#%^%#$#`).digest("hex");
+    return token
+}
+function makeTokenApp(target) {
+    const token = crypto.createHmac("sha256", `${target.id}-${target.app_id}-#@*#&%#%^%#$#`).update(`${target.id}-${target.app_id}-#@*#&%#%^%#$#`).digest("hex");
     return token
 }
 function makeInt(length) {
-    var result           = '';
-    var characters       = '0123456789';
+    var result = '';
+    var characters = '0123456789';
     var charactersLength = characters.length;
-    for ( var i = 0; i < length; i++ ) {
-    result += characters.charAt(Math.floor(Math.random() * 
-        charactersLength));
+    for (var i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() *
+            charactersLength));
     }
     return result;
 }

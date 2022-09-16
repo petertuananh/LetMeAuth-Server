@@ -1,0 +1,45 @@
+<%- include("../partials/header")%>
+<body>
+    <!-- partial:index.partial.html -->
+    <div class="login-form">
+        <form method="post" action="/oauth2/authorized?app_id=<%= app_id %>&redirect_url=<%= callback_url %>">
+            
+            <div class="content">
+                <img src="<%= app_icon %>" alt="" id="icon">
+                <h1><%= app_name %></h1>
+                <div class="input-field">
+                    <h4>This application can</h4>
+                </div>
+                <div class="input-field">
+                    <p>✅ Access your email address</p>
+                </div>
+                <div class="input-field">
+                    <p>✅ Access your username, avatar, banner</p>
+                </div>
+                <hr>
+                <p style="font-size: 11px;">Your will be redirected to <%= callback_url %> after authorized</p>
+            </div>
+            <div class="action">
+                <button type="submit" style="background-color: aqua;">Authorize</button>
+            </div>
+        </form>
+    </div>
+</body>
+
+</html>
+<script>
+    if ('<%= msg %>') {
+        alert('<%= msg %>')
+    }
+</script>
+<style>
+    #icon{
+        border-top-right-radius: 50%;
+        border-bottom-left-radius: 50%;
+        border-top-left-radius: 50%;
+        border-bottom-right-radius: 50%;
+        max-width: 80px;
+        max-height: 80px;
+    }
+</style>
+<%- include("../partials/footer")%>

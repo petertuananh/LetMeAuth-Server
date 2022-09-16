@@ -1,0 +1,33 @@
+<%- include("../partials/header")%>
+<body>
+    <!-- partial:index.partial.html -->
+    <div class="login-form">
+        <form method="post" action="/auth/callback">
+            <h1>Login</h1>
+            <div class="content">
+                <div class="input-field">
+                    <input type="email" name="username" placeholder="Email" autocomplete="nope">
+                </div>
+                <div class="input-field">
+                    <input type="password" name="password" placeholder="Password" autocomplete="new-password">
+                </div>
+                <a href="/auth/forgotten" class="link">Forgot Your Password?</a>
+            </div>
+            <div class="action">
+                <button type="button" onclick="window.location.href = '/register'">Register</button>
+                <button type="submit">Sign in</button>
+            </div>
+        </form>
+    </div>
+    <!-- partial -->
+    <script src="/assets/js/login.js"></script>
+
+</body>
+
+</html>
+<script>
+    if ('<%= msg %>' !== 'no') {
+        alert('<%= msg %>')
+    }
+</script>
+<%- include("../partials/footer")%>
