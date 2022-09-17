@@ -34,6 +34,7 @@
     "mysql": "^2.18.1",
     "node-2fa": "^2.0.3",
     "passport": "^0.6.0",
+    "passport-2fa-totp": "^0.0.1",
     "passport-local": "^1.0.0"
   }
 }

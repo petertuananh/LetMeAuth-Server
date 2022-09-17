@@ -10,6 +10,7 @@ const twofactor = require("node-2fa");
 var expressSession = require('express-session');
 var passport = require('passport');
 var passportLocal = require('passport-local');
+var TwoFA = require('passport-2fa-totp');
 
 const mysqlInfo = {
     host: config.database.mysql.host,
@@ -41,6 +42,11 @@ var scopes = ['identify', 'email', 'guilds', 'guilds.join', 'guilds.members.read
 var prompt = 'consent'
 
 passport.use('letmeauth', new passportLocal.Strategy(
+    {
+        usernameField : 'username',
+        passwordField : 'password',
+        session : true,
+    },
     function (username, password, done) {
         con.query(`SELECT * FROM USER WHERE email="${username}"`,async function (err, user) {
             if (!user[0]) return done(null, false, { message: 'Incorrect username or password.' })
@@ -58,12 +64,28 @@ passport.serializeUser((user, done) => {
 passport.deserializeUser(function (user, done) {
     done(null, user);
 });
+
+app.get("/", checkAuth, async (req, res) => {
+    res.send(`Logged in at ${req.user.username}`)
+})
+
 app.post('/auth/callback',
     passport.authenticate('letmeauth', { 
         failureRedirect: '/auth/login',
         failureMessage: true
     }),function(req, res) {
-        res.redirect(req.cookies.redirect ? req.cookies.redirect : '/');
+        con.query(`SELECT * FROM USER WHERE id=${req.user.id}`,async function (err, user) {
+            const verifyToken = await twofactor.verifyToken(user[0].twofactor, req.body.twofactor);
+            if (verifyToken) {
+                con.query(`INSERT INTO 2FA(user_id, session_id, code) VALUES (${req.user.id}, "${req.session.id}", ${req.body.twofactor})`)
+                return res.redirect(req.cookies.redirect ? req.cookies.redirect : '/');
+            } else {
+                return res.render("pages/auth/login", { msg : 'Invalid 2FA code' })
+            }
+        })
+        
+
+        
 });
 
 app.get("/auth/login", async (req, res) => {
@@ -83,7 +105,9 @@ app.post("/register", async (req, res) => {
             if (username[0]) return res.render("pages/auth/register", { msg : "This username is aready in use!" })
             const user_id = makeInt(17)
             const token = makeToken({ id : user_id , password : data.password })
-            con.query(`INSERT INTO USER(id, flags, email, username, token, 2fa, createAT, avatar, banner, color) VALUES (${user_id}, "", "${data.email}", "${data.username}", "${token}", "", ${Date.now()}, "", "", "")`)
+            const newSecret = twofactor.generateSecret({ name: "Let Me Auth", account: user_id });
+            con.query(`INSERT INTO USER(id, flags, email, username, token, twofactor, createAT, avatar, banner, color) VALUES (${user_id}, "", "${data.email}", "${data.username}", "${token}", "${newSecret.secret}", ${Date.now()}, "", "", "")`)
+            return res.send(`Please setup your 2 factor authentication with this code : ${newSecret.secret} <img src="${newSecret.qr}" alt="">`)
         })
     })
 });
@@ -174,9 +198,16 @@ app.get("/application/:app_id/:target", checkAuth, async (req, res) => {
     })
 });
 async function checkAuth(req, res, next) {
-    if (req.isAuthenticated()) return next()
-    res.cookie("redirect", req.url)
-    return res.redirect("/auth/login")
+    if (req.isAuthenticated()) {
+        con.query(`SELECT * FROM 2FA WHERE user_id=${req.user.id} && session_id="${req.session.id}"`,async function (err, tfa) {
+            if (!tfa[0]) return res.redirect("/auth/login?msg=Invalid 2fa code")
+            return next()
+        })
+    } else {
+        res.cookie("redirect", req.url)
+        return res.redirect("/auth/login")
+    }
+    
 }
 // functions
 function makeString(length) {
