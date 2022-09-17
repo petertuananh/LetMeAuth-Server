@@ -10,7 +10,6 @@ const twofactor = require("node-2fa");
 var expressSession = require('express-session');
 var passport = require('passport');
 var passportLocal = require('passport-local');
-// var TwoFA = require('passport-2fa-totp');
 
 const mysqlInfo = {
     host: config.database.mysql.host,
@@ -56,6 +55,7 @@ passport.use('letmeauth', new passportLocal.Strategy(
             if (!user[0]) return done(null, false, { message: 'Incorrect username or password.' })
             const tokenInput = makeToken({ id : user[0].id, password : password })
             if (tokenInput !== user[0].token) return done(null, false, { message: 'Incorrect username or password.' })
+            
             return done(null, user[0])
         })
     }
@@ -70,7 +70,9 @@ passport.deserializeUser(function (user, done) {
 });
 
 app.get("/", checkAuth, async (req, res) => {
-    res.send(`Logged in at ${req.user.username}`)
+    res.render("pages/home", {
+        req : req
+    })
 })
 
 app.post('/auth/callback',
@@ -128,7 +130,17 @@ app.get("/oauth2/checktoken", async (req, res) => {
                 if (!access_token[0]) return res.send("Unknown token!")
                 con.query(`SELECT * FROM USER WHERE id="${access_token[0].user_id}"`,async function (err, user) {
                     if (!user[0]) return res.send("Unknown user!")
-                    return res.json(user[0])
+                    const rawData = {
+                        id : user[0].id,
+                        username : user[0].username,
+                        email : user[0].email,
+                        twofactor : user[0].twofactor ? true : false,
+                        createAT: user[0].createAT,
+                        avatar : user[0].avatar,
+                        banner : user[0].banner,
+                        color : user[0].color
+                    }
+                    return res.json(rawData)
                 })
             })
         })
