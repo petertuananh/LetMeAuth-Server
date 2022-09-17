@@ -10,7 +10,7 @@ const twofactor = require("node-2fa");
 var expressSession = require('express-session');
 var passport = require('passport');
 var passportLocal = require('passport-local');
-var TwoFA = require('passport-2fa-totp');
+// var TwoFA = require('passport-2fa-totp');
 
 const mysqlInfo = {
     host: config.database.mysql.host,
