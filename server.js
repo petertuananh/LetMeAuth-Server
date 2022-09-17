@@ -34,7 +34,11 @@ app.use(bodyParser.json());
 app.use(bodyParser.raw()); app.set('view engine', 'ejs');
 const dataDir = path.resolve(`${process.cwd()}${path.sep}views`);
 app.use("/assets", express.static(path.resolve(`${dataDir}${path.sep}assets`)));
-app.use(expressSession({ secret: '#@*#&%#%^%#$##@*#&%#%^%#$##@*#&%#%^%#$#' }))
+app.use(expressSession({ 
+    secret: '#@*#&%#%^%#$##@*#&%#%^%#$##@*#&%#%^%#$#',
+    resave: true,
+    saveUninitialized: true
+}))
 app.use(passport.initialize());
 app.use(passport.session());
 // raw
