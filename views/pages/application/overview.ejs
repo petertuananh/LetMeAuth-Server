@@ -3,7 +3,7 @@
 
 <body>
     <div class="container-scroller">
-        <div class="row p-0 m-0 proBanner" id="proBanner">
+        <!-- <div class="row p-0 m-0 proBanner" id="proBanner">
             <div class="col-md-12 p-0 m-0">
                 <div class="card-body card-body-padding d-flex align-items-center justify-content-between">
                     <div class="ps-lg-1">
@@ -23,7 +23,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> -->
         <!-- partial:partials/_sidebar.html -->
         <%- include("../partials/menu")%>
             <!-- partial -->
@@ -146,7 +146,7 @@
 
 </html>
 <div class="form-popup" id="myForm">
-    <form id="uploadForm" action="/user/setting/avatar" enctype="multipart/form-data" method="post">
+    <form id="uploadForm" action="/application/<%= application.id %>/icon" enctype="multipart/form-data" method="post">
         <div class="input-file">
             <input required type="file" name="userFile" id="userFile"/>
             <label for="userFile" class="input-label">
@@ -176,6 +176,7 @@
                 data: { twofactor : '' },
             });
         }
+        window.location.href = '/application'
     }
     function toggleSetting(target) {
         $.ajax({

@@ -37,7 +37,9 @@ app.use(bodyParser.raw()); app.set('view engine', 'ejs');
 const dataDir = path.resolve(`${process.cwd()}${path.sep}views`);
 app.use("/assets", express.static(path.resolve(`${dataDir}${path.sep}assets`)));
 app.use("/avatar", express.static(path.resolve(`${dataDir}${path.sep}assets${path.sep}data${path.sep}avatar`)));
-app.use("/banner", express.static(path.resolve(`${dataDir}${path.sep}assets${path.sep}banner`)));
+app.use("/banner", express.static(path.resolve(`${dataDir}${path.sep}assets${path.sep}data${path.sep}banner`)));
+app.use("/icon", express.static(path.resolve(`${dataDir}${path.sep}assets${path.sep}data${path.sep}icon`)));
+
 app.use(expressSession({
     secret: '#@*#&%#%^%#$##@*#&%#%^%#$##@*#&%#%^%#$#',
     resave: true,
@@ -73,8 +75,12 @@ passport.serializeUser((user, done) => {
 passport.deserializeUser(function (user, done) {
     done(null, user);
 });
-
-app.get("/", checkAuth, async (req, res) => {
+app.get("/", async (req, res) => {
+    res.render("pages/index", {
+        req: req
+    })
+})
+app.get("/home", checkAuth, async (req, res) => {
     res.render("pages/home", {
         req: req
     })
@@ -132,6 +138,16 @@ let avtStorage = multer.diskStorage({
         callback(null, avt)
     }
 })
+let iconStorage = multer.diskStorage({
+    destination: function (req, file, callback) {
+        callback(null, './views/assets/data/icon')
+    },
+    filename: async function (req, file, callback) {
+        const avt = `avt-${makeString(10)}${path.extname(file.originalname)}`
+        await con.query(`UPDATE APPLICATION SET icon = "${avt}" WHERE id=${req.params.app_id}`)
+        callback(null, avt)
+    }
+})
 app.post("/user/setting/:target", checkAuth, async (req, res) => {
     
     const target = req.query.target
@@ -141,7 +157,7 @@ app.post("/user/setting/:target", checkAuth, async (req, res) => {
             const verifyToken = await twofactor.verifyToken(secret, req.body.twofactor);
             if (!verifyToken) return res.redirect("/user/setting/2fa", { msg: 'Invalid 2FA token!' })
             con.query(`UPDATE USER SET twofactor = '${secret}' WHERE id=${req.user.id}`)
-            return res.redirect("/")
+            return res.redirect("/home")
         } else if (target == 'disable') {
             con.query(`SELECT * FROM USER WHERE id=${req.user.id}`, async function (err, user) {
                 const verifyToken = await twofactor.verifyToken(user[0].twofactor, req.body.token);
@@ -164,7 +180,7 @@ app.post("/user/setting/:target", checkAuth, async (req, res) => {
 
         }).single('userFile');
         upload(req, res, function (err) {
-            res.redirect("/")
+            res.redirect("/home")
         })
     }
 })
@@ -182,8 +198,9 @@ app.post("/register", async (req, res) => {
             const user_id = makeInt(17)
             const token = makeToken({ id: user_id, password: data.password })
             const newSecret = twofactor.generateSecret({ name: "Let Me Auth", account: user_id });
-            con.query(`INSERT INTO USER(id, flags, email, username, token, twofactor, createAT, avatar, banner, color) VALUES (${user_id}, "", "${data.email}", "${data.username}", "${token}", "${newSecret.secret}", ${Date.now()}, "", "", "")`)
-            return res.send(`Please setup your 2 factor authentication with this code : ${newSecret.secret} <img src="${newSecret.qr}" alt="">`)
+            con.query(`INSERT INTO USER(id, flags, email, username, token, twofactor, createAT, avatar, banner, color) VALUES (${user_id}, "", "${data.email}", "${data.username}", "${token}", "", ${Date.now()}, "", "", "")`)
+            return res.redirect("/auth/login")
+            // return res.send(`Please setup your 2 factor authentication with this code : ${newSecret.secret} <img src="${newSecret.qr}" alt="">`)
         })
     })
 });
@@ -225,7 +242,7 @@ app.post("/oauth2/authorized", checkAuth, async (req, res) => {
     } else {
         con.query(`SELECT * FROM APPLICATION WHERE id="${query.app_id}"`, async function (err, application) {
             if (!application[0]) return res.send("Unknown application!")
-            if (!application[0].allow_authorize) return res.send("This application not longer allow authorize!") 
+            if (!application[0].allow_authorize) return res.send("This application no longer allow authorize!") 
             const access_token = makeTokenApp({ id: req.user.id, app_id: application[0].id })
             con.query(`INSERT INTO ACCESS_TOKEN(user_id, app_id, createAT, access_token) VALUES (${req.user.id}, ${application[0].id}, ${Date.now()}, "${access_token}")`)
             return res.redirect(`${query.redirect_url}?token=${access_token}`)
@@ -241,13 +258,12 @@ app.get("/oauth2/authorize", checkAuth, async (req, res) => {
     } else {
         con.query(`SELECT * FROM APPLICATION WHERE id="${query.app_id}"`, async function (err, application) {
             if (!application[0]) return res.send("Unknown application!")
+            if (!application[0].allow_authorize) return res.send("This application no longer allow authorize!") 
             res.render("pages/oauth2/authorize", {
                 req : req,
-                app_id: application[0].id,
-                app_name: application[0].name,
+                application : application[0],
                 msg: null,
                 callback_url: query.redirect_url,
-                app_icon: application[0].icon
             })
         })
     }
@@ -295,12 +311,28 @@ app.post("/application/:app_id/:target", checkAuth, async (req, res) => {
                     if (user[0].twofactor) {
                         const verifyToken = await twofactor.verifyToken(user[0].twofactor, req.body.twofactor);
                         if (!verifyToken) return res.redirect("/application?msg=Deleted")
-                        con.query(`DELETE FROM PERM WHERE app_id=${app_id}`)
+                        con.query(`DELETE FROM PERMISSION WHERE app_id=${app_id}`)
                         return con.query(`DELETE FROM APPLICATION WHERE id=${app_id}`)
                     } else {
-                        con.query(`DELETE FROM PERM WHERE app_id=${app_id}`)
+                        con.query(`DELETE FROM PERMISSION WHERE app_id=${app_id}`)
                         return con.query(`DELETE FROM APPLICATION WHERE id=${app_id}`)
                     }
+                })
+            } else if (req.params.target == 'icon') {
+                let upload = multer({
+                    storage: iconStorage,
+                    fileFilter: function (req, file, callback) {
+                        if (!file) return;
+                        let ext = path.extname(file.originalname)
+                        if (ext !== '.png' && ext !== '.jpg' && ext !== '.gif' && ext !== '.jpeg') {
+                            return res.send("<script>alert(`Only images are allowed!`);")
+                        }
+                        callback(null, true)
+                    }
+        
+                }).single('userFile');
+                upload(req, res, function (err) {
+                    res.redirect(`/application/${app_id}/overview`)
                 })
             }
         })

@@ -3,11 +3,11 @@
 <body>
     <!-- partial:index.partial.html -->
     <div class="login-form">
-        <form method="post" action="/oauth2/authorized?app_id=<%= app_id %>&redirect_url=<%= callback_url %>">
+        <form method="post" action="/oauth2/authorized?app_id=<%= application.id %>&redirect_url=<%= callback_url %>">
             
             <div class="content">
-                <img src="<%= app_icon %>" alt="" id="icon">
-                <h1><%= app_name %></h1>
+                <img src="/icon/<%= application.icon %>" alt="" id="icon">
+                <h1><%= application.name %></h1>
                 <div class="input-field">
                     <h4>This application can</h4>
                 </div>
