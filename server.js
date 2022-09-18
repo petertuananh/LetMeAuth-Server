@@ -400,4 +400,6 @@ function makeInt(length) {
     }
     return result;
 }
-app.listen(config.server.port)
+app.listen(config.server.port, () => {
+    console.log(`Working at port ${config.server.port}`)
+})
