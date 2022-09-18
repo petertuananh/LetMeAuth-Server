@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<body>
+    <div class="container-scroller">
+        <div class="row p-0 m-0 proBanner" id="proBanner">
+            <div class="col-md-12 p-0 m-0">
+                <div class="card-body card-body-padding d-flex align-items-center justify-content-between">
+                    <div class="ps-lg-1">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <p class="mb-0 font-weight-medium me-3 buy-now-text">Free 24/7 customer support, updates,
+                                and more with this template!</p>
+                            <a href="https://www.bootstrapdash.com/product/corona-free/?utm_source=organic&utm_medium=banner&utm_campaign=buynow_demo"
+                                target="_blank" class="btn me-2 buy-now-btn border-0">Get Pro</a>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <a href="https://www.bootstrapdash.com/product/corona-free/"><i
+                                class="mdi mdi-home me-3 text-white"></i></a>
+                        <button id="bannerClose" class="btn border-0 p-0">
+                            <i class="mdi mdi-close text-white me-0"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- partial:partials/_sidebar.html -->
+        <%- include("../partials/menu")%>
+            <!-- partial -->
+            <div class="container-fluid page-body-wrapper">
+                <!-- partial:partials/_navbar.html -->
+                <%- include("../partials/header")%>
+                    <!-- partial -->
+                    <div class="main-panel">
+                        <div class="content-wrapper">
+                            
+                            <div class="row">
+                                <div class="col-md-8 grid-margin stretch-card">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="d-flex flex-row justify-content-between">
+                                                <h2 class="card-title mb-1">Your application</h2>
+                                                <% if (!application.icon) { %>
+                                                    <button onclick="openForm()">Add avatar</button>
+                                                <% } %>
+                                                <img style="max-height: 80px" onclick="openForm()" src="/icon/<%= application.icon %>" alt="">
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <div class="preview-list">
+                                                        <div class="preview-item border-bottom">
+                                                            <div class="preview-thumbnail">
+                                                                <div class="preview-icon">
+                                                                    <i class="fa-solid fa-user"></i>
+                                                                </div>
+                                                            </div>
+                                                            <div class="preview-item-content d-sm-flex flex-grow">
+                                                                <div class="flex-grow">
+                                                                    <h6 class="preview-subject"><%= application.name %>
+                                                                    </h6>
+                                                                    <p class="text-muted mb-0">Application name
+                                                                    </p>
+                                                                </div>
+                                                                <div class="me-auto text-sm-right pt-2 pt-sm-0">
+                                                                    <!-- <p class="text-muted">15 minutes ago</p>
+                                                                    <p class="text-muted mb-0">30 tasks, 5 issues </p> -->
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="preview-item border-bottom">
+                                                            <div class="preview-thumbnail">
+                                                                <div class="preview-icon">
+                                                                    <i class="fa-regular fa-id-card"></i>
+                                                                </div>
+                                                            </div>
+                                                            <div class="preview-item-content d-sm-flex flex-grow">
+                                                                <div class="flex-grow">
+                                                                    <h6 class="preview-subject"><%= application.id %>
+                                                                    </h6>
+                                                                    <p class="text-muted mb-0">ID</p>
+                                                                </div>
+                                                                <div class="me-auto text-sm-right pt-2 pt-sm-0">
+                                                                    <!-- <p class="text-muted">1 hour ago</p>
+                                                                    <p class="text-muted mb-0">23 tasks, 5 issues </p> -->
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <!--  -->
+                                <div class="col-sm-4 grid-margin">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5>Allow authorize</h5>
+                                            <div class="row">
+                                                <div class="col-8 col-sm-12 col-xl-8 my-auto">
+                                                    <div class="d-flex d-sm-block d-md-flex align-items-center">
+                                                        <label class="switch">
+                                                            <input type="checkbox" name="allow_authorize" onclick="toggleSetting('allow_authorize')" <% if(application.allow_authorize){ %> checked="checked" <% } %>>
+                                                            <span class="slider round"></span>
+                                                        </label>
+                                                    </div>
+                                                    <!-- <h6 class="text-muted font-weight-normal">Allow users authorize with this app -->
+                                                    </h6>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4 grid-margin">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5>Delete application</h5>
+                                            <div class="row">
+                                                <div class="col-8 col-sm-12 col-xl-8 my-auto">
+                                                    <div class="d-flex d-sm-block d-md-flex align-items-center">
+                                                        <button onclick="deleteApp()">Delete</button>
+                                                    </div>
+                                                    <!-- <h6 class="text-muted font-weight-normal">Allow users authorize with this app -->
+                                                    </h6>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        <!-- content-wrapper ends -->
+                        <!-- partial:partials/_footer.html -->
+                        <%- include("../partials/footer")%>
+                            <!-- partial -->
+                    </div>
+                    <!-- main-panel ends -->
+            </div>
+            <!-- page-body-wrapper ends -->
+    </div>
+
+</body>
+
+</html>
+<div class="form-popup" id="myForm">
+    <form id="uploadForm" action="/user/setting/avatar" enctype="multipart/form-data" method="post">
+        <div class="input-file">
+            <input required type="file" name="userFile" id="userFile"/>
+            <label for="userFile" class="input-label">
+              <i class="fas fa-cloud-upload-alt icon-upload"></i>
+            </label>
+        </div>
+        <input type="submit" value="Upload File" name="submit" onclick="window.location.reload()" class="btn upload-btn">
+    </form>
+</div>
+
+<script>
+    function deleteApp() {
+        if ('<%= req.user.twofactor %>') {
+            const check = prompt("Enter 2FA token", "")
+            if (check != null) {
+                $.ajax({
+                    type: "POST",
+                    url: "/application/<%= application.id %>/delete",
+                    data: { twofactor : check },
+                });
+                
+            }
+        } else {
+            $.ajax({
+                type: "POST",
+                url: "/application/<%= application.id %>/delete",
+                data: { twofactor : '' },
+            });
+        }
+    }
+    function toggleSetting(target) {
+        $.ajax({
+            type: "POST",
+            url: `/application/<%= application.id %>/setting/?tab=allow_authorize&target=${$(`input[name=${target}]:checked`).val() ? 'enable' : 'disable' }`,
+            data: { data : '' },
+        });
+        
+    }
+    function openForm() {
+        document.getElementById("myForm").style.display = "block";
+    }
+
+    function closeForm() {
+        document.getElementById("myForm").style.display = "none";
+    }
+</script>
+<style>
+    body {font-family: Arial, Helvetica, sans-serif;}
+* {box-sizing: border-box;}
+
+/* Button used to open the contact form - fixed at the bottom of the page */
+.open-button {
+  background-color: #555;
+  color: white;
+  padding: 16px 20px;
+  border: none;
+  cursor: pointer;
+  opacity: 0.8;
+  position: fixed;
+  bottom: 23px;
+  right: 28px;
+  width: 280px;
+}
+
+/* The popup form - hidden by default */
+.form-popup {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  right: 15px;
+  border: 3px solid #f1f1f1;
+  z-index: 9;
+}
+
+/* Add styles to the form container */
+.form-container {
+  max-width: 300px;
+  padding: 10px;
+  background-color: white;
+}
+
+/* Full-width input fields */
+.form-container input[type=text], .form-container input[type=password] {
+  width: 100%;
+  padding: 15px;
+  margin: 5px 0 22px 0;
+  border: none;
+  background: #f1f1f1;
+}
+
+/* When the inputs get focus, do something */
+.form-container input[type=text]:focus, .form-container input[type=password]:focus {
+  background-color: #ddd;
+  outline: none;
+}
+
+/* Set a style for the submit/login button */
+.form-container .btn {
+  background-color: #04AA6D;
+  color: white;
+  padding: 16px 20px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  margin-bottom:10px;
+  opacity: 0.8;
+}
+
+/* Add a red background color to the cancel button */
+.form-container .cancel {
+  background-color: red;
+}
+
+/* Add some hover effects to buttons */
+.form-container .btn:hover, .open-button:hover {
+  opacity: 1;
+}
+/* The switch - the box around the slider */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+/* Hide default HTML checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+</style>

@@ -1,28 +1,119 @@
-<%- include("../partials/header")%>
+<!DOCTYPE html>
+<html lang="en">
+
 <body>
-    <!-- partial:index.partial.html -->
-    <div class="login-form">
-        <form method="post" action="/application/create">
-            <h1>Create new application</h1>
-            <div class="content">
-                <div class="input-field">
-                    <input type="text" name="name" placeholder="Name" autocomplete="nope">
+    <div class="container-scroller">
+        <div class="row p-0 m-0 proBanner" id="proBanner">
+            <div class="col-md-12 p-0 m-0">
+                <div class="card-body card-body-padding d-flex align-items-center justify-content-between">
+                    <div class="ps-lg-1">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <p class="mb-0 font-weight-medium me-3 buy-now-text">Free 24/7 customer support, updates,
+                                and more with this template!</p>
+                            <a href="https://www.bootstrapdash.com/product/corona-free/?utm_source=organic&utm_medium=banner&utm_campaign=buynow_demo"
+                                target="_blank" class="btn me-2 buy-now-btn border-0">Get Pro</a>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <a href="https://www.bootstrapdash.com/product/corona-free/"><i
+                                class="mdi mdi-home me-3 text-white"></i></a>
+                        <button id="bannerClose" class="btn border-0 p-0">
+                            <i class="mdi mdi-close text-white me-0"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
-            <div class="action">
-                <button type="submit">Create</button>
+        </div>
+        <!-- partial:partials/_sidebar.html -->
+        <%- include("../partials/menu")%>
+            <!-- partial -->
+            <div class="container-fluid page-body-wrapper">
+                <!-- partial:partials/_navbar.html -->
+                <%- include("../partials/header")%>
+                    <!-- partial -->
+                    <div class="main-panel">
+                        <div class="content-wrapper">
+                            <div class="row">
+                                <!--  -->
+                                <div class="col-sm-4 grid-margin">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5>Create new application</h5>
+                                            <div class="row">
+                                                <div class="col-8 col-sm-12 col-xl-8 my-auto">
+                                                    <div class="d-flex d-sm-block d-md-flex align-items-center">
+                                                        <button class="btn-apps" onclick="createApp()"><i class="fa-solid fa-plus"></i> Create</button>
+                                                        <!-- <h2 class="mb-0">$32123</h2> -->
+                                                        <!-- <p class="text-success ms-2 mb-0 font-weight-medium">+3.5%</p> -->
+                                                    </div>
+                                                    <!-- <h6 class="text-muted font-weight-normal">11.38% Since last month -->
+                                                    </h6>
+                                                </div>
+                                                <div class="col-4 col-sm-12 col-xl-4 text-center text-xl-right">
+                                                    <i class="icon-lg mdi mdi-codepen text-primary ms-auto"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--  -->
+                                <% application.forEach(async app => { %>
+                                    <div class="col-sm-4 grid-margin">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h5><%= app.name %></h5>
+                                                <div class="row">
+                                                    <div class="col-8 col-sm-12 col-xl-8 my-auto">
+                                                        <div class="d-flex d-sm-block d-md-flex align-items-center">
+                                                            <button class="btn-apps" onclick="window.location.href = '/application/<%= app.id %>/overview'"><i class="fa-solid fa-gear"></i> Manage</button>
+                                                            <!-- <h2 class="mb-0">$32123</h2> -->
+                                                            <!-- <p class="text-success ms-2 mb-0 font-weight-medium">+3.5%</p> -->
+                                                        </div>
+                                                        <!-- <h6 class="text-muted font-weight-normal">11.38% Since last month -->
+                                                        </h6>
+                                                    </div>
+                                                    <div class="col-4 col-sm-12 col-xl-4 text-center text-xl-right">
+                                                        <img style="max-height: 80px;" src="<%= app.icon %>" alt="">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            </div>
+                        </div>
+                        <!-- content-wrapper ends -->
+                        <!-- partial:partials/_footer.html -->
+                        <%- include("../partials/footer")%>
+                            <!-- partial -->
+                    </div>
+                    <!-- main-panel ends -->
             </div>
-        </form>
+            <!-- page-body-wrapper ends -->
     </div>
-    <!-- partial -->
-    <script src="/assets/js/login.js"></script>
 
 </body>
 
 </html>
 <script>
-    if ('<%= msg %>') {
-        alert('<%= msg %>')
+    function createApp() {
+        const name = prompt("Create new application", "Application name here")
+        if (name != null) {
+            $.ajax({
+                type: "POST",
+                url: "/application/create",
+                data: { name : name },
+            });
+            window.location.reload()
+        }
     }
 </script>
-<%- include("../partials/footer")%>
+<style>
+    .btn-apps {
+        background-color: aquamarine;
+        border-top-right-radius: 10%;
+        border-bottom-left-radius: 10%;
+        border-top-left-radius: 10%;
+        border-bottom-right-radius: 10%;
+    }
+</style>

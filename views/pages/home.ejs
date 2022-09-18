@@ -43,24 +43,23 @@
                                                         class="gradient-corona-img img-fluid" alt="">
                                                 </div>
                                                 <div class="col-5 col-sm-7 col-xl-8 p-0">
-                                                    <h4 class="mb-1 mb-sm-0">Want even more features?</h4>
-                                                    <p class="mb-0 font-weight-normal d-none d-sm-block">Check out our
-                                                        Pro version with 5 unique layouts!</p>
+                                                    <h4 class="mb-1 mb-sm-0">Content :v</h4>
+                                                    <p class="mb-0 font-weight-normal d-none d-sm-block">New update!</p>
                                                 </div>
                                                 <div class="col-3 col-sm-2 col-xl-2 ps-0 text-center">
-                                                    <span>
+                                                    <!-- <span>
                                                         <a href="https://www.bootstrapdash.com/product/corona-admin-template/"
                                                             target="_blank"
                                                             class="btn btn-outline-light btn-rounded get-started-btn">Upgrade
                                                             to PRO</a>
-                                                    </span>
+                                                    </span> -->
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="row">
+                            <!-- <div class="row">
                                 <div class="col-xl-3 col-sm-6 grid-margin stretch-card">
                                     <div class="card">
                                         <div class="card-body">
@@ -141,9 +140,9 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div> -->
                             <div class="row">
-                                <div class="col-md-4 grid-margin stretch-card">
+                                <!-- <div class="col-md-4 grid-margin stretch-card">
                                     <div class="card">
                                         <div class="card-body">
                                             <h4 class="card-title">Transaction History</h4>
@@ -172,105 +171,108 @@
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </div> -->
                                 <div class="col-md-8 grid-margin stretch-card">
                                     <div class="card">
                                         <div class="card-body">
                                             <div class="d-flex flex-row justify-content-between">
-                                                <h4 class="card-title mb-1">Open Projects</h4>
-                                                <p class="text-muted mb-1">Your data status</p>
+                                                <h2 class="card-title mb-1">Your account</h2>
+                                                <% if (!req.user.avatar) { %>
+                                                    <button onclick="openForm()">Add avatar</button>
+                                                <% } %>
+                                                <img style="max-height: 80px" onclick="openForm()" src="/avatar/<%= req.user.avatar %>" alt="">
+
+                                                <!-- <p class="text-muted mb-1">Your data status</p> -->
                                             </div>
                                             <div class="row">
                                                 <div class="col-12">
                                                     <div class="preview-list">
                                                         <div class="preview-item border-bottom">
                                                             <div class="preview-thumbnail">
-                                                                <div class="preview-icon bg-primary">
-                                                                    <i class="mdi mdi-file-document"></i>
+                                                                <div class="preview-icon">
+                                                                    <i class="fa-solid fa-user"></i>
                                                                 </div>
                                                             </div>
                                                             <div class="preview-item-content d-sm-flex flex-grow">
                                                                 <div class="flex-grow">
-                                                                    <h6 class="preview-subject">Admin dashboard design
+                                                                    <h6 class="preview-subject"><%= req.user.username %>
                                                                     </h6>
-                                                                    <p class="text-muted mb-0">Broadcast web app mockup
+                                                                    <p class="text-muted mb-0">Username
                                                                     </p>
                                                                 </div>
                                                                 <div class="me-auto text-sm-right pt-2 pt-sm-0">
-                                                                    <p class="text-muted">15 minutes ago</p>
-                                                                    <p class="text-muted mb-0">30 tasks, 5 issues </p>
+                                                                    <!-- <p class="text-muted">15 minutes ago</p>
+                                                                    <p class="text-muted mb-0">30 tasks, 5 issues </p> -->
                                                                 </div>
                                                             </div>
                                                         </div>
                                                         <div class="preview-item border-bottom">
                                                             <div class="preview-thumbnail">
-                                                                <div class="preview-icon bg-success">
-                                                                    <i class="mdi mdi-cloud-download"></i>
+                                                                <div class="preview-icon">
+                                                                    <i class="fa-regular fa-id-card"></i>
                                                                 </div>
                                                             </div>
                                                             <div class="preview-item-content d-sm-flex flex-grow">
                                                                 <div class="flex-grow">
-                                                                    <h6 class="preview-subject">Wordpress Development
+                                                                    <h6 class="preview-subject"><%= req.user.id %>
                                                                     </h6>
-                                                                    <p class="text-muted mb-0">Upload new design</p>
+                                                                    <p class="text-muted mb-0">ID</p>
                                                                 </div>
                                                                 <div class="me-auto text-sm-right pt-2 pt-sm-0">
-                                                                    <p class="text-muted">1 hour ago</p>
-                                                                    <p class="text-muted mb-0">23 tasks, 5 issues </p>
+                                                                    <!-- <p class="text-muted">1 hour ago</p>
+                                                                    <p class="text-muted mb-0">23 tasks, 5 issues </p> -->
                                                                 </div>
                                                             </div>
                                                         </div>
                                                         <div class="preview-item border-bottom">
                                                             <div class="preview-thumbnail">
-                                                                <div class="preview-icon bg-info">
-                                                                    <i class="mdi mdi-clock"></i>
+                                                                <div class="preview-icon">
+                                                                    <i class="fa-solid fa-at"></i>
                                                                 </div>
                                                             </div>
                                                             <div class="preview-item-content d-sm-flex flex-grow">
                                                                 <div class="flex-grow">
-                                                                    <h6 class="preview-subject">Project meeting</h6>
-                                                                    <p class="text-muted mb-0">New project discussion
+                                                                    <h6 class="preview-subject"><%= req.user.email %></h6>
+                                                                    <p class="text-muted mb-0">Email
                                                                     </p>
                                                                 </div>
                                                                 <div class="me-auto text-sm-right pt-2 pt-sm-0">
-                                                                    <p class="text-muted">35 minutes ago</p>
-                                                                    <p class="text-muted mb-0">15 tasks, 2 issues</p>
+                                                                    <!-- <p class="text-muted">35 minutes ago</p>
+                                                                    <p class="text-muted mb-0">15 tasks, 2 issues</p> -->
                                                                 </div>
                                                             </div>
                                                         </div>
                                                         <div class="preview-item border-bottom">
                                                             <div class="preview-thumbnail">
-                                                                <div class="preview-icon bg-danger">
-                                                                    <i class="mdi mdi-email-open"></i>
-                                                                </div>
+                                                                <div class="preview-icon">
+                                                                    <i class="fa-solid fa-shield-halved"></i>                                                                </div>
                                                             </div>
                                                             <div class="preview-item-content d-sm-flex flex-grow">
                                                                 <div class="flex-grow">
-                                                                    <h6 class="preview-subject">Broadcast Mail</h6>
-                                                                    <p class="text-muted mb-0">Sent release details to
-                                                                        team</p>
+                                                                    <h6 class="preview-subject">2FA : <%= req.user.twofactor ? __append('true') : __append('false') %></h6>
+                                                                    <p class="text-muted mb-0">Two Factor Authentication</p>
                                                                 </div>
                                                                 <div class="me-auto text-sm-right pt-2 pt-sm-0">
-                                                                    <p class="text-muted">55 minutes ago</p>
-                                                                    <p class="text-muted mb-0">35 tasks, 7 issues </p>
+                                                                    <%= req.user.twofactor ? __append('<button style="background-color: tomato;" onclick="remove2fa()">Remove 2FA</button>') : __append('<button style="background-color: tomato;" onclick="window.location.href = `/user/setting/2fa?target=enable`">Enable 2FA</button>') %>
+                                                                    <!-- <p class="text-muted">55 minutes ago</p>
+                                                                    <p class="text-muted mb-0">35 tasks, 7 issues </p> -->
                                                                 </div>
                                                             </div>
                                                         </div>
                                                         <div class="preview-item">
                                                             <div class="preview-thumbnail">
-                                                                <div class="preview-icon bg-warning">
-                                                                    <i class="mdi mdi-chart-pie"></i>
-                                                                </div>
+                                                                <div class="preview-icon">
+                                                                    <i class="fa-regular fa-clock"></i>                                                                </div>
                                                             </div>
                                                             <div class="preview-item-content d-sm-flex flex-grow">
                                                                 <div class="flex-grow">
-                                                                    <h6 class="preview-subject">UI Design</h6>
-                                                                    <p class="text-muted mb-0">New application planning
+                                                                    <h6 class="preview-subject">Joinned <%= ms(Date.now() - parseInt(req.user.createAT)) %> ago</h6>
+                                                                    <p class="text-muted mb-0">Joinned our system ... ago
                                                                     </p>
                                                                 </div>
                                                                 <div class="me-auto text-sm-right pt-2 pt-sm-0">
-                                                                    <p class="text-muted">50 minutes ago</p>
-                                                                    <p class="text-muted mb-0">27 tasks, 4 issues </p>
+                                                                    <!-- <p class="text-muted">50 minutes ago</p>
+                                                                    <p class="text-muted mb-0">27 tasks, 4 issues </p> -->
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -281,7 +283,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="row">
+                            <!-- <div class="row">
                                 <div class="col-sm-4 grid-margin">
                                     <div class="card">
                                         <div class="card-body">
@@ -739,7 +741,7 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </div> -->
                         <!-- content-wrapper ends -->
                         <!-- partial:partials/_footer.html -->
                         <%- include("./partials/footer")%>
@@ -753,3 +755,108 @@
 </body>
 
 </html>
+<div class="form-popup" id="myForm">
+    <form id="uploadForm" action="/user/setting/avatar" enctype="multipart/form-data" method="post">
+        <div class="input-file">
+            <input required type="file" name="userFile" id="userFile"/>
+            <label for="userFile" class="input-label">
+              <i class="fas fa-cloud-upload-alt icon-upload"></i>
+            </label>
+        </div>
+        <input type="submit" value="Upload File" name="submit" onclick="window.location.reload()" class="btn upload-btn">
+    </form>
+</div>
+
+<script>
+    function remove2fa() {
+        let token = prompt("Enter 2FA token", "");
+        if (token != null) {
+            $.ajax({
+                type: "POST",
+                url: "/user/setting/2fa?target=disable",
+                data: { token : token },
+            });
+            window.location.href = '/auth/logout'
+            // console.log(token)
+        }
+    }
+    function openForm() {
+        document.getElementById("myForm").style.display = "block";
+    }
+
+    function closeForm() {
+        document.getElementById("myForm").style.display = "none";
+    }
+</script>
+<style>
+    body {font-family: Arial, Helvetica, sans-serif;}
+* {box-sizing: border-box;}
+
+/* Button used to open the contact form - fixed at the bottom of the page */
+.open-button {
+  background-color: #555;
+  color: white;
+  padding: 16px 20px;
+  border: none;
+  cursor: pointer;
+  opacity: 0.8;
+  position: fixed;
+  bottom: 23px;
+  right: 28px;
+  width: 280px;
+}
+
+/* The popup form - hidden by default */
+.form-popup {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  right: 15px;
+  border: 3px solid #f1f1f1;
+  z-index: 9;
+}
+
+/* Add styles to the form container */
+.form-container {
+  max-width: 300px;
+  padding: 10px;
+  background-color: white;
+}
+
+/* Full-width input fields */
+.form-container input[type=text], .form-container input[type=password] {
+  width: 100%;
+  padding: 15px;
+  margin: 5px 0 22px 0;
+  border: none;
+  background: #f1f1f1;
+}
+
+/* When the inputs get focus, do something */
+.form-container input[type=text]:focus, .form-container input[type=password]:focus {
+  background-color: #ddd;
+  outline: none;
+}
+
+/* Set a style for the submit/login button */
+.form-container .btn {
+  background-color: #04AA6D;
+  color: white;
+  padding: 16px 20px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  margin-bottom:10px;
+  opacity: 0.8;
+}
+
+/* Add a red background color to the cancel button */
+.form-container .cancel {
+  background-color: red;
+}
+
+/* Add some hover effects to buttons */
+.form-container .btn:hover, .open-button:hover {
+  opacity: 1;
+}
+</style>
