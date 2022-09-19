@@ -11,6 +11,7 @@ const nodemailer = require('nodemailer');
 var expressSession = require('express-session');
 var passport = require('passport');
 var passportLocal = require('passport-local');
+const rateLimitMap = new Map();
 const ms = require("ms")
 const multer = require("multer")
 const mysqlInfo = {
@@ -47,6 +48,36 @@ app.use(expressSession({
 }))
 app.use(passport.initialize());
 app.use(passport.session());
+app.use(async (req, res, next) => {
+    const ip = await req.headers['x-forwarded-for'].split(",")[0]
+    con.query(`SELECT * FROM IP_BANNED WHERE ip="${ip}"`, async function (err, data) {
+        if (data[0]) {
+            if ((parseFloat(data[0].bannedAT) + parseInt(data[0].duration)) <= Date.now()) con.query(`DELETE FROM IP_BANNED WHERE ip="${ip}"`)
+            return res.status(403).json({ code: 403, msg: `Your ip was banned from the API`, duration: ms(parseInt(data[0].duration)) })
+        } else {
+            next()
+            if (rateLimitMap.has(ip)) {
+                const guildData = rateLimitMap.get(ip);
+                let rateCount = guildData.rateCount;
+                ++rateCount
+                if (parseInt(rateCount) == 10) {
+                    con.query(`INSERT INTO IP_BANNED (ip, reason, bannedAT, duration) VALUES ("${ip}", "Rate limited", ${Date.now()}, ${ms('15m')})`)
+                    rateLimitMap.delete(ip);
+                } else {
+                    guildData.rateCount = rateCount;
+                    rateLimitMap.set(ip, guildData);
+                }
+            } else {
+                setTimeout(() => {
+                    rateLimitMap.delete(ip);
+                }, 1000);
+                rateLimitMap.set(ip, {
+                    rateCount: 1,
+                });
+            }
+        }
+    })
+})
 // raw
 var scopes = ['identify', 'email', 'guilds', 'guilds.join', 'guilds.members.read'];
 var prompt = 'consent'
@@ -359,17 +390,19 @@ async function checkAuth(req, res, next) {
     if (req.isAuthenticated()) {
         con.query(`SELECT * FROM USER WHERE id=${req.user.id}`, async function (err, user) {
             if (!user[0]) return res.redirect("/auth/login")
-            if (!user[0].twofactor) return next()
-            con.query(`SELECT * FROM 2FA WHERE user_id=${req.user.id} && session_id="${req.session.id}"`, async function (err, tfa) {
-                if (!tfa[0]) return res.redirect("/auth/login?msg=Invalid 2fa code")
-                return next()
+            con.query(`SELECT * FROM USER_BANNED WHERE user_id=${req.user.id}`, async function (err, ban) {
+                if (ban[0]) return res.send(`You have been banned with reason: ${ban[0].reason}`)
+                if (!user[0].twofactor) return next()
+                con.query(`SELECT * FROM 2FA WHERE user_id=${req.user.id} && session_id="${req.session.id}"`, async function (err, tfa) {
+                    if (!tfa[0]) return res.redirect("/auth/login?msg=Invalid 2fa code")
+                    return next()
+                })
             })
         })
     } else {
         res.cookie("redirect", req.url)
         return res.redirect("/auth/login")
     }
-
 }
 // functions
 function makeString(length) {
