@@ -12,6 +12,12 @@ const axios = require("axios")
 var expressSession = require('express-session');
 const DiscordOauth2 = require("discord-oauth2");
 const DiscOauth = new DiscordOauth2();
+const passportDiscord = require("passport-discord");
+const passportFacebook = require("passport-facebook");
+const passportGoogle = require("passport-google-oauth2");
+const passportGithub = require("passport-github");
+const passportMicrosoft = require("passport-microsoft");
+
 var passport = require('passport');
 var passportLocal = require('passport-local');
 const rateLimitMap = new Map();
@@ -84,9 +90,70 @@ app.use(async (req, res, next) => {
     // })
 })
 // raw
-var scopes = ['identify', 'email', 'guilds', 'guilds.join', 'guilds.members.read'];
-var prompt = 'consent'
 
+passport.use(new passportDiscord(
+    {
+        clientID: config.oauth.discord.id,
+        clientSecret: config.oauth.discord.secret,
+        callbackURL: `https://letmeauth.xyz/auth/login/discord`,
+        scope: ["identify", "guilds", "email"],
+        prompt: 'consent'
+    },
+    (accessToken, refreshToken, profile, done) => {
+        con.query(`SELECT * FROM AUTH_SOCIALNETWORK WHERE socialnetwork_id=${profile.id}`, async function (err, urs) {
+            if (!urs[0]) return done(null, false, { message: `Can't find any account linked with this Discord user!` })
+            con.query(`SELECT * FROM USER WHERE id=${urs[0].user_id}`, async function (err, user) {
+                if (!user[0]) return;
+                return done(null, user[0])
+            })
+        })
+    },
+));
+app.get('/auth/login/discord', passport.authenticate('discord', { failureRedirect: '/auth/login' }), function(req, res){
+    con.query(`INSERT INTO 2FA(user_id, session_id, code) VALUES (${req.user.id}, "${req.session.id}", '000000')`)
+    return res.redirect(req.cookies.redirect ? req.cookies.redirect : '/');
+})
+
+passport.use(new passportFacebook(
+    {
+        clientID: config.oauth.facebook.id,
+        clientSecret: config.oauth.facebook.secret,
+        callbackURL: `https://letmeauth.xyz/auth/login/facebook`,
+    },
+    (accessToken, refreshToken, profile, done) => {
+        con.query(`SELECT * FROM AUTH_SOCIALNETWORK WHERE socialnetwork_id=${profile.id}`, async function (err, urs) {
+            if (!urs[0]) return done(null, false, { message: `Can't find any account linked with this Facebook user!` })
+            con.query(`SELECT * FROM USER WHERE id=${urs[0].user_id}`, async function (err, user) {
+                if (!user[0]) return;
+                return done(null, user[0])
+            })
+        })
+    },
+));
+app.get('/auth/login/facebook', passport.authenticate('facebook', { failureRedirect: '/auth/login' }), function(req, res){
+    con.query(`INSERT INTO 2FA(user_id, session_id, code) VALUES (${req.user.id}, "${req.session.id}", '000000')`)
+    return res.redirect(req.cookies.redirect ? req.cookies.redirect : '/');
+})
+passport.use(new passportGoogle(
+    {
+        clientID: config.oauth.google.id,
+        clientSecret: config.oauth.google.secret,
+        callbackURL: "https://letmeauth.xyz/auth/login/google",
+    },
+    (accessToken, refreshToken, profile, done) => {
+        con.query(`SELECT * FROM AUTH_SOCIALNETWORK WHERE socialnetwork_id=${profile.id}`, async function (err, urs) {
+            if (!urs[0]) return done(null, false, { message: `Can't find any account linked with this Google user!` })
+            con.query(`SELECT * FROM USER WHERE id=${urs[0].user_id}`, async function (err, user) {
+                if (!user[0]) return;
+                return done(null, user[0])
+            })
+        })
+    },
+));
+app.get('/auth/login/google', passport.authenticate('google', { failureRedirect: '/auth/login' }), function(req, res){
+    con.query(`INSERT INTO 2FA(user_id, session_id, code) VALUES (${req.user.id}, "${req.session.id}", '000000')`)
+    return res.redirect(req.cookies.redirect ? req.cookies.redirect : '/');
+})
 passport.use('letmeauth', new passportLocal.Strategy(
     {
         usernameField: 'username',
@@ -152,7 +219,8 @@ app.post('/auth/callback', passport.authenticate('letmeauth', {
 
 app.get("/auth/login", async (req, res) => {
     res.render("pages/auth/login", {
-        msg: req.session.messages || 'no'
+        msg: req.session.messages || 'no',
+        oauth : config.oauth
     })
 });
 app.get("/auth/logout", checkAuth, async (req, res) => {
@@ -168,81 +236,7 @@ function make_config(authorization_token) { // Define the function
     };
     return data; // Return the created object
 };
-app.get("/connections/auth/:target", checkAuth, async (req, res) => {
-    const target = req.params.target
-    const token = req.query.code || req.query.token || req.query.access_token
-    if (req.query.action == 'disconnect') {
-        await con.query(`DELETE FROM AUTH_SOCIALNETWORK WHERE user_id=${req.user.id} && name="${target}"`)
-        return res.redirect(`/home?msg=Disconnected your ${target} account!`)
-    }
-    await con.query(`DELETE FROM AUTH_SOCIALNETWORK WHERE user_id=${req.user.id} && name="${target}"`)
-    if (target == 'discord') {
-        if (!token) return res.redirect("https://discord.com/oauth2/authorize?client_id=1023163031758311444&scope=identify&response_type=code&redirect_uri=https://letmeauth.xyz/connections/auth/discord")
-        DiscOauth.tokenRequest({
-            clientId: config.oauth.discord.id,
-            clientSecret: config.oauth.discord.secret,
-            code: token,
-            scope: "identify email",
-            grantType: "authorization_code",
-            redirectUri: "http://localhost:1111/connections/auth/discord",
-        })
-            .catch(e => {
-                return res.redirect("/connections/auth/discord")
-            })
-            .then(async (r) => {
-                if (!r) return
-                DiscOauth.getUser(r.access_token)
-                    .catch(e => {
-                        return res.redirect("/connections/auth/discord")
-                    })
-                    .then(async (u) => {
-                        if (!u) return
-                        await con.query(`INSERT INTO AUTH_SOCIALNETWORK(name, user_id, socialnetwork_id, socialnetwork_name) VALUES ("discord", ${req.user.id}, ${u.id}, "${u.username}")`)
-                        return res.redirect(`/home?msg=Added your Discord account!`)
-                    })
-            })
-    } else if (target == 'facebook') {
-        if (!token) return res.redirect(`https://facebook.com/dialog/oauth?client_id=${config.oauth.facebook.id}&redirect_uri=http://localhost:1111/connections/auth/facebook&scope=public_profile`)
-        axios.default.get(`https://graph.facebook.com/oauth/access_token?client_id=${config.oauth.facebook.id}&client_secret=${config.oauth.facebook.secret}&redirect_uri=http://localhost:1111/connections/auth/facebook&code=${token}`)
-            .then(async (r) => {
-                if (!r) return;
-                axios.default.get(`https://graph.facebook.com/me?access_token=${r.data.access_token}`)
-                    .then(async (r2) => {
-                        if (!r2) return
-                        await con.query(`INSERT INTO AUTH_SOCIALNETWORK(name, user_id, socialnetwork_id, socialnetwork_name) VALUES ("facebook", ${req.user.id}, ${r2.data.id}, "${r2.data.name}")`)
-                        return res.redirect(`/home?msg=Added your Facebook account!`)
-                    })
-                    .catch(e => {
-                        return res.sendStatus(500)
-                    })
-            })
-            .catch(e => {
-                return res.sendStatus(500)
-            })
-    } else if (target == 'google') {
-        if (!token) return res.redirect(`https://accounts.google.com/o/oauth2/auth?scope=email&redirect_uri=http://localhost:1111/connections/auth/google&response_type=code&client_id=${config.oauth.google.id}&approval_prompt=force`)
-        const r = await axios({
-            url: 'https://oauth2.googleapis.com/token',
-            method: 'POST',
-            params: {
-                client_id: config.oauth.google.id,
-                client_secret: config.oauth.google.secret,
-                redirect_uri: 'http://localhost:1111/connections/auth/google',
-                code: token,
-                grant_type: 'authorization_code',
-            },
-        })
-        axios.default.get(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${r.data.access_token}`)
-            .then(async (r2) => {
-                if (!r2) return;
-                await con.query(`INSERT INTO AUTH_SOCIALNETWORK(name, user_id, socialnetwork_id, socialnetwork_name) VALUES ("google", ${req.user.id}, ${r2.data.id}, "${r2.data.email}")`)
-                return res.redirect(`/home?msg=Added your Google account!`)
-            })
-            .catch(e => {
-                return res.sendStatus(500)
-            })
-    }
-})
+
 
 app.get("/user/setting/:target", checkAuth, async (req, res) => {
     const target = req.query.target
@@ -486,6 +480,83 @@ app.get("/application/:app_id/:target", checkAuth, async (req, res) => {
         })
     })
 });
+
+app.get("/connections/auth/:target", checkAuth, async (req, res) => {
+    const target = req.params.target
+    const token = req.query.code || req.query.token || req.query.access_token
+    if (req.query.action == 'disconnect') {
+        await con.query(`DELETE FROM AUTH_SOCIALNETWORK WHERE user_id=${req.user.id} && name="${target}"`)
+        return res.redirect(`/home?msg=Disconnected your ${target} account!`)
+    }
+    await con.query(`DELETE FROM AUTH_SOCIALNETWORK WHERE user_id=${req.user.id} && name="${target}"`)
+    if (target == 'discord') {
+        if (!token) return res.redirect("https://discord.com/oauth2/authorize?client_id=1023163031758311444&scope=identify&response_type=code&redirect_uri=https://letmeauth.xyz/connections/auth/discord")
+        DiscOauth.tokenRequest({
+            clientId: config.oauth.discord.id,
+            clientSecret: config.oauth.discord.secret,
+            code: token,
+            scope: "identify email",
+            grantType: "authorization_code",
+            redirectUri: "https://letmeauth.xyz/connections/auth/discord",
+        })
+            .catch(e => {
+                return res.redirect("/connections/auth/discord")
+            })
+            .then(async (r) => {
+                if (!r) return
+                DiscOauth.getUser(r.access_token)
+                    .catch(e => {
+                        return res.redirect("/connections/auth/discord")
+                    })
+                    .then(async (u) => {
+                        if (!u) return
+                        await con.query(`INSERT INTO AUTH_SOCIALNETWORK(name, user_id, socialnetwork_id, socialnetwork_name) VALUES ("discord", ${req.user.id}, ${u.id}, "${u.username}")`)
+                        return res.redirect(`/home?msg=Added your Discord account!`)
+                    })
+            })
+    } else if (target == 'facebook') {
+        if (!token) return res.redirect(`https://facebook.com/dialog/oauth?client_id=${config.oauth.facebook.id}&redirect_uri=https://letmeauth.xyz/connections/auth/facebook&scope=public_profile`)
+        axios.default.get(`https://graph.facebook.com/oauth/access_token?client_id=${config.oauth.facebook.id}&client_secret=${config.oauth.facebook.secret}&redirect_uri=https://letmeauth.xyz/connections/auth/facebook&code=${token}`)
+            .then(async (r) => {
+                if (!r) return;
+                axios.default.get(`https://graph.facebook.com/me?access_token=${r.data.access_token}`)
+                    .then(async (r2) => {
+                        if (!r2) return
+                        await con.query(`INSERT INTO AUTH_SOCIALNETWORK(name, user_id, socialnetwork_id, socialnetwork_name) VALUES ("facebook", ${req.user.id}, ${r2.data.id}, "${r2.data.name}")`)
+                        return res.redirect(`/home?msg=Added your Facebook account!`)
+                    })
+                    .catch(e => {
+                        return res.sendStatus(500)
+                    })
+            })
+            .catch(e => {
+                return res.sendStatus(500)
+            })
+    } else if (target == 'google') {
+        if (!token) return res.redirect(`https://accounts.google.com/o/oauth2/auth?scope=email&redirect_uri=https://letmeauth.xyz/connections/auth/google&response_type=code&client_id=${config.oauth.google.id}&approval_prompt=force`)
+        const r = await axios({
+            url: 'https://oauth2.googleapis.com/token',
+            method: 'POST',
+            params: {
+                client_id: config.oauth.google.id,
+                client_secret: config.oauth.google.secret,
+                redirect_uri: 'https://letmeauth.xyz/connections/auth/google',
+                code: token,
+                grant_type: 'authorization_code',
+            },
+        })
+        axios.default.get(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${r.data.access_token}`)
+            .then(async (r2) => {
+                if (!r2) return;
+                await con.query(`INSERT INTO AUTH_SOCIALNETWORK(name, user_id, socialnetwork_id, socialnetwork_name) VALUES ("google", ${req.user.id}, ${r2.data.id}, "${r2.data.email}")`)
+                return res.redirect(`/home?msg=Added your Google account!`)
+            })
+            .catch(e => {
+                return res.sendStatus(500)
+            })
+    }
+})
+
 async function checkAuth(req, res, next) {
     if (req.isAuthenticated()) {
         con.query(`SELECT * FROM USER WHERE id=${req.user.id}`, async function (err, user) {
