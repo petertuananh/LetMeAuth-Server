@@ -2,6 +2,20 @@
     "server" : {
         "port" : 1111
     },
+    "oauth" : {
+        "discord" : {
+            "id" : "1023163031758311444",
+            "secret" : "qIjjsbFxYVjfASWrtOp8gvdsIGZbsZ5o"
+        },
+        "facebook" : {
+            "id" : "3339491496373617",
+            "secret" : "feb69f299c5df59bbb6ac6cfc13f2ea6"
+        },
+        "google" : {
+            "id" : "1042782055649-tl7pbnl6t0qpe7q4e1dhi9vqoslrl1ji.apps.googleusercontent.com",
+            "secret" : "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"
+        }
+    },
     "database": {
         "mysql": {
             "host": "srcscode.xyz",

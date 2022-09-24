@@ -279,6 +279,79 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            
+
+
+
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <!--  -->
+                                <div class="col-sm-4 grid-margin">
+                                    <div class="card" style="height: 175px">
+                                        <div class="card-body">
+                                            <h5><%= socialnetwork.discord ? socialnetwork.discord.name : '' %></h5>
+                                            <div class="row">
+                                                <div class="col-8 col-sm-12 col-xl-8 my-auto">
+                                                    <div class="d-flex d-sm-block d-md-flex align-items-center">
+                                                        <%= socialnetwork.discord ? __append(`<button class="btn-apps" onclick="window.location.href = '/connections/auth/discord?action=disconnect'"><i class="fa-solid fa-plus"></i> Disconnect</button>`) : __append(`<button class="btn-apps" onclick="window.location.href = '/connections/auth/discord'"><i class="fa-solid fa-plus"></i> Connect</button>`) %>
+                                                        <!-- <h2 class="mb-0">$32123</h2> -->
+                                                        <!-- <p class="text-success ms-2 mb-0 font-weight-medium">+3.5%</p> -->
+                                                    </div>
+                                                    <!-- <h6 class="text-muted font-weight-normal">11.38% Since last month -->
+                                                    </h6>
+                                                </div>
+                                                <div class="col-4 col-sm-12 col-xl-4 text-center text-xl-right">
+                                                    <img style="max-height: 80px;" src="/assets/icons/discord.png" alt="">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--  -->
+                                <div class="col-sm-4 grid-margin">
+                                    <div class="card" style="height: 175px">
+                                        <div class="card-body">
+                                            <h5><%= socialnetwork.facebook ? socialnetwork.facebook.name : '' %></h5>
+                                            <div class="row">
+                                                <div class="col-8 col-sm-12 col-xl-8 my-auto">
+                                                    <div class="d-flex d-sm-block d-md-flex align-items-center">
+                                                        <%= socialnetwork.facebook ? __append(`<button class="btn-apps" onclick="window.location.href = '/connections/auth/facebook?action=disconnect'"><i class="fa-solid fa-plus"></i> Disconnect</button>`) : __append(`<button class="btn-apps" onclick="window.location.href = '/connections/auth/facebook'"><i class="fa-solid fa-plus"></i> Connect</button>`) %>
+                                                        <!-- <h2 class="mb-0">$32123</h2> -->
+                                                        <!-- <p class="text-success ms-2 mb-0 font-weight-medium">+3.5%</p> -->
+                                                    </div>
+                                                    <!-- <h6 class="text-muted font-weight-normal">11.38% Since last month -->
+                                                    </h6>
+                                                </div>
+                                                <div class="col-4 col-sm-12 col-xl-4 text-center text-xl-right">
+                                                    <img style="max-height: 80px;" src="/assets/icons/facebook.png" alt="">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--  -->
+                                <div class="col-sm-4 grid-margin">
+                                    <div class="card" style="height: 175px">
+                                        <div class="card-body">
+                                            <h5><%= socialnetwork.google ? socialnetwork.google.name : '' %></h5>
+                                            <div class="row">
+                                                <div class="col-8 col-sm-12 col-xl-8 my-auto">
+                                                    <div class="d-flex d-sm-block d-md-flex align-items-center">
+                                                        <%= socialnetwork.google ? __append(`<button class="btn-apps" onclick="window.location.href = '/connections/auth/google?action=disconnect'"><i class="fa-solid fa-plus"></i> Disconnect</button>`) : __append(`<button class="btn-apps" onclick="window.location.href = '/connections/auth/google'"><i class="fa-solid fa-plus"></i> Connect</button>`) %>
+                                                        <!-- <h2 class="mb-0">$32123</h2> -->
+                                                        <!-- <p class="text-success ms-2 mb-0 font-weight-medium">+3.5%</p> -->
+                                                    </div>
+                                                    <!-- <h6 class="text-muted font-weight-normal">11.38% Since last month -->
+                                                    </h6>
+                                                </div>
+                                                <div class="col-4 col-sm-12 col-xl-4 text-center text-xl-right">
+                                                    <img style="max-height: 80px;" src="/assets/icons/google.png" alt="">
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -860,3 +933,8 @@
   opacity: 1;
 }
 </style>
+<script>
+    if ('<%= msg %>') {
+        alert('<%= msg %>')
+    }
+</script>
