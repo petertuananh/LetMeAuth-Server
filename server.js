@@ -139,6 +139,8 @@ passport.use(new passportGoogle(
         clientID: config.oauth.google.id,
         clientSecret: config.oauth.google.secret,
         callbackURL: "https://letmeauth.xyz/auth/login/google",
+        scope: [ 'email', 'profile' ],
+        prompt: 'force'
     },
     (accessToken, refreshToken, profile, done) => {
         con.query(`SELECT * FROM AUTH_SOCIALNETWORK WHERE socialnetwork_id=${profile.id}`, async function (err, urs) {
@@ -183,6 +185,12 @@ app.get("/", async (req, res) => {
         req: req
     })
 })
+app.get("/policy", async (req, res) => {
+    res.send("hi")
+})
+app.get("/tos", async (req, res) => {
+    res.send("hi")
+})
 app.get("/home", checkAuth, async (req, res) => {
     let rawData = {}
     con.query(`SELECT * FROM AUTH_SOCIALNETWORK WHERE user_id=${req.user.id}`, async function (err, socialnetwork) {
@@ -195,7 +203,7 @@ app.get("/home", checkAuth, async (req, res) => {
         })
         res.render("pages/home", {
             req: req,
-            msg: req.query.msg || null,
+            msg: req.query.msg || req.session.messages || null,
             socialnetwork: rawData
         })
     })
@@ -219,7 +227,7 @@ app.post('/auth/callback', passport.authenticate('letmeauth', {
 
 app.get("/auth/login", async (req, res) => {
     res.render("pages/auth/login", {
-        msg: req.session.messages || 'no',
+        msg: req.session.messages || null,
         oauth : config.oauth
     })
 });
@@ -247,7 +255,7 @@ app.get("/user/setting/:target", checkAuth, async (req, res) => {
                 const newSecret = twofactor.generateSecret({ name: "Let Me Auth", account: req.user.id });
                 res.render('pages/auth/2fa', {
                     twofactor: newSecret,
-                    msg: 'no'
+                    msg: null
                 })
             })
         }
@@ -332,16 +340,16 @@ app.post("/register", async (req, res) => {
 app.get("/oauth2/checktoken", async (req, res) => {
     const query = req.query
     if (!query.app_id) {
-        return res.send("Unknown application!")
+        return res.json({ code : 'lma_10', msg : 'Missing application id' })
     } else if (!query.token) {
-        return res.send("Unknown token!")
+        return res.json({ code : 'lma_11', msg : 'Missing access token' })
     } else {
         con.query(`SELECT * FROM APPLICATION WHERE id="${query.app_id}"`, async function (err, application) {
-            if (!application[0]) return res.send("Unknown application!")
+            if (!application[0]) return res.json({ code : 'lma_12', msg : 'Unknown application' })
             con.query(`SELECT * FROM ACCESS_TOKEN WHERE access_token="${query.token}"`, async function (err, access_token) {
-                if (!access_token[0]) return res.send("Unknown token!")
+                if (!access_token[0]) return res.json({ code : 'lma_13', msg : 'Unknown access token' })
                 con.query(`SELECT * FROM USER WHERE id="${access_token[0].user_id}"`, async function (err, user) {
-                    if (!user[0]) return res.send("Unknown user!")
+                    if (!user[0]) return res.json({ code : 'lma_14', msg : 'Unknown user' })
                     const rawData = {
                         id: user[0].id,
                         username: user[0].username,
