@@ -3,7 +3,7 @@
 <body>
     <!-- partial:index.partial.html -->
     <div class="login-form">
-        <form method="post" action="/oauth2/authorized?app_id=<%= application.id %>&redirect_url=<%= callback_url %>">
+        <form method="post" action="/oauth2/authorized?app_id=<%= application.id %>&scopes=<%= scopes %>&redirect_url=<%= callback_url %>">
             
             <div class="content">
                 <img src="/icon/<%= application.icon %>" alt="" id="icon">
@@ -12,10 +12,13 @@
                     <h4>This application can</h4>
                 </div>
                 <div class="input-field">
-                    <p>✅ Access your email address</p>
+                    <%= scopes.includes("identify") ? __append(`<p>✅ Access your username, avatar, banner</p>`) : '' %>
                 </div>
                 <div class="input-field">
-                    <p>✅ Access your username, avatar, banner</p>
+                    <%= scopes.includes("email") ? __append(`<p>✅ Access your email address</p>`) : '' %>
+                </div>
+                <div class="input-field">
+                    <%= scopes.includes("socialnetwork") ? __append(`<p>✅ Access your social network names</p>`) : '' %>
                 </div>
                 <hr>
                 <p style="font-size: 11px;">Your will be redirected to <%= callback_url %> after authorized</p>

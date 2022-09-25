@@ -36,7 +36,7 @@ const mysqlInfo = {
 }
 
 const con = mysql.createPool(mysqlInfo)
-
+const validScopes = ["identify", "email", "socialnetwork"]
 // uses
 app.locals.ms = ms
 app.set('title', 'Let Me Auth');
@@ -109,7 +109,7 @@ passport.use(new passportDiscord(
         })
     },
 ));
-app.get('/auth/login/discord', passport.authenticate('discord', { failureRedirect: '/auth/login' }), function(req, res){
+app.get('/auth/login/discord', passport.authenticate('discord', { failureRedirect: '/auth/login' }), function (req, res) {
     con.query(`INSERT INTO 2FA(user_id, session_id, code) VALUES (${req.user.id}, "${req.session.id}", '000000')`)
     return res.redirect(req.cookies.redirect ? req.cookies.redirect : '/');
 })
@@ -130,7 +130,7 @@ passport.use(new passportFacebook(
         })
     },
 ));
-app.get('/auth/login/facebook', passport.authenticate('facebook', { failureRedirect: '/auth/login' }), function(req, res){
+app.get('/auth/login/facebook', passport.authenticate('facebook', { failureRedirect: '/auth/login' }), function (req, res) {
     con.query(`INSERT INTO 2FA(user_id, session_id, code) VALUES (${req.user.id}, "${req.session.id}", '000000')`)
     return res.redirect(req.cookies.redirect ? req.cookies.redirect : '/');
 })
@@ -139,7 +139,7 @@ passport.use(new passportGoogle(
         clientID: config.oauth.google.id,
         clientSecret: config.oauth.google.secret,
         callbackURL: "https://letmeauth.xyz/auth/login/google",
-        scope: [ 'email', 'profile' ],
+        scope: ['email', 'profile'],
         prompt: 'force'
     },
     (accessToken, refreshToken, profile, done) => {
@@ -152,7 +152,7 @@ passport.use(new passportGoogle(
         })
     },
 ));
-app.get('/auth/login/google', passport.authenticate('google', { failureRedirect: '/auth/login' }), function(req, res){
+app.get('/auth/login/google', passport.authenticate('google', { failureRedirect: '/auth/login' }), function (req, res) {
     con.query(`INSERT INTO 2FA(user_id, session_id, code) VALUES (${req.user.id}, "${req.session.id}", '000000')`)
     return res.redirect(req.cookies.redirect ? req.cookies.redirect : '/');
 })
@@ -228,7 +228,7 @@ app.post('/auth/callback', passport.authenticate('letmeauth', {
 app.get("/auth/login", async (req, res) => {
     res.render("pages/auth/login", {
         msg: req.session.messages || null,
-        oauth : config.oauth
+        oauth: config.oauth
     })
 });
 app.get("/auth/logout", checkAuth, async (req, res) => {
@@ -340,27 +340,39 @@ app.post("/register", async (req, res) => {
 app.get("/oauth2/checktoken", async (req, res) => {
     const query = req.query
     if (!query.app_id) {
-        return res.json({ code : 'lma_10', msg : 'Missing application id' })
+        return res.json({ code: 'lma_10', msg: 'Missing application id' })
     } else if (!query.token) {
-        return res.json({ code : 'lma_11', msg : 'Missing access token' })
+        return res.json({ code: 'lma_11', msg: 'Missing access token' })
+        // } else if (!query.scopes) {
+        //     return res.json({ code : 'lma_15', msg : 'Missing scopes' })
     } else {
         con.query(`SELECT * FROM APPLICATION WHERE id="${query.app_id}"`, async function (err, application) {
-            if (!application[0]) return res.json({ code : 'lma_12', msg : 'Unknown application' })
+            if (!application[0]) return res.json({ code: 'lma_12', msg: 'Unknown application' })
+            if (query.client_secret !== application[0].client_secret) return res.json({ code: 'lma_17', msg: 'Invalid client secret' })
             con.query(`SELECT * FROM ACCESS_TOKEN WHERE access_token="${query.token}"`, async function (err, access_token) {
-                if (!access_token[0]) return res.json({ code : 'lma_13', msg : 'Unknown access token' })
+                if (!access_token[0]) return res.json({ code: 'lma_13', msg: 'Unknown access token' })
                 con.query(`SELECT * FROM USER WHERE id="${access_token[0].user_id}"`, async function (err, user) {
-                    if (!user[0]) return res.json({ code : 'lma_14', msg : 'Unknown user' })
-                    const rawData = {
-                        id: user[0].id,
-                        username: user[0].username,
-                        email: user[0].email,
-                        twofactor: user[0].twofactor ? true : false,
-                        createAT: user[0].createAT,
-                        avatar: user[0].avatar,
-                        banner: user[0].banner,
-                        color: user[0].color
+                    if (!user[0]) return res.json({ code: 'lma_14', msg: 'Unknown user' })
+                    con.query(`SELECT * FROM AUTH_SOCIALNETWORK WHERE user_id="${user[0].id}"`, async function (err, socialnetwork) {
+                        let rawData = {}
+                    if (access_token[0].identify == 'true') {
+                        rawData.id = user[0].id
+                        rawData.username = user[0].username
+                        rawData.twofactor = user[0].twofactor ? true : false
+                        rawData.createAT = user[0].createAT
+                        rawData.avatar = user[0].avatar
+                        rawData.banner = user[0].banner
+                        rawData.color = user[0].color
+                    }
+                    if (access_token[0].email == 'true') {
+                        rawData.email = user[0].email
+                    }
+                    if (access_token[0].socialnetwork == 'true') {
+                        if (!socialnetwork) return;
+                        rawData.socialnetwork = socialnetwork
                     }
                     return res.json(rawData)
+                    })
                 })
             })
         })
@@ -368,26 +380,36 @@ app.get("/oauth2/checktoken", async (req, res) => {
 })
 app.post("/oauth2/authorized", checkAuth, async (req, res) => {
     const query = req.query
+    let foundInText = false;
+    for (var i in validScopes) {
+        if (query.scopes.toLowerCase().includes(validScopes[i].toLowerCase())) foundInText = true;
+    }
     if (!query.app_id) {
-        return res.send("Unknown application!")
-    } else if (!query.redirect_url) {
-        return res.send("Unknown redirect url!")
+        return res.json({ code: 'lma_10', msg: 'Missing application id' })
+    } else if (!foundInText) {
+        return res.json({ code: 'lma_15', msg: 'Invalid scopes' })
     } else {
         con.query(`SELECT * FROM APPLICATION WHERE id="${query.app_id}"`, async function (err, application) {
             if (!application[0]) return res.send("Unknown application!")
             if (!application[0].allow_authorize) return res.send("This application no longer allow authorize!")
-            const access_token = makeTokenApp({ id: req.user.id, app_id: application[0].id })
-            con.query(`INSERT INTO ACCESS_TOKEN(user_id, app_id, createAT, access_token) VALUES (${req.user.id}, ${application[0].id}, ${Date.now()}, "${access_token}")`)
+            const access_token = makeTokenApp({ id: req.user.id, app_id: application[0].id }) + makeString(20)
+            con.query(`INSERT INTO ACCESS_TOKEN(user_id, app_id, createAT, access_token, identify, email, socialnetwork) VALUES (${req.user.id}, ${application[0].id}, ${Date.now()}, "${access_token}", "${query.scopes.includes("identify") ? 'true' : 'false'}", "${query.scopes.includes("email") ? 'true' : 'false'}", "${query.scopes.includes("socialnetwork") ? 'true' : 'false'}")`)
             return res.redirect(`${query.redirect_url}?token=${access_token}`)
         })
     }
 })
 app.get("/oauth2/authorize", checkAuth, async (req, res) => {
     const query = req.query
+    let foundInText = false;
+    for (var i in validScopes) {
+        if (query.scopes.toLowerCase().includes(validScopes[i].toLowerCase())) foundInText = true;
+    }
     if (!query.app_id) {
-        return res.send("Unknown application!")
+        return res.json({ code: 'lma_10', msg: 'Missing application id' })
+    } else if (!foundInText) {
+        return res.json({ code: 'lma_15', msg: 'Invalid scopes' })
     } else if (!query.redirect_url) {
-        return res.send("Unknown redirect url!")
+        return res.json({ code: 'lma_16', msg: 'Invalid redirect url' })
     } else {
         con.query(`SELECT * FROM APPLICATION WHERE id="${query.app_id}"`, async function (err, application) {
             if (!application[0]) return res.send("Unknown application!")
@@ -397,6 +419,7 @@ app.get("/oauth2/authorize", checkAuth, async (req, res) => {
                 application: application[0],
                 msg: null,
                 callback_url: query.redirect_url,
+                scopes: req.query.scopes
             })
         })
     }
@@ -422,7 +445,7 @@ app.post("/application/create", checkAuth, async (req, res) => {
         if (application[0]) return res.redirect("/application?msg='This application name aready registered!'")
         const app_id = makeInt(17)
         await con.query(`DELETE FROM PERMISSION WHERE user_id=${req.user.id} && app_id=${app_id}`)
-        con.query(`INSERT INTO APPLICATION(id, name, createAT, icon, redirect_url, allow_authorize) VALUES (${app_id}, "${data.name}", ${Date.now()}, "", "", "true")`)
+        con.query(`INSERT INTO APPLICATION(id, name, client_secret, createAT, icon, redirect_url, allow_authorize) VALUES (${app_id}, "${data.name}", "${makeString(30)}", ${Date.now()}, "", "", "true")`)
         con.query(`INSERT INTO PERMISSION(user_id, app_id, permission) VALUES (${req.user.id}, ${app_id}, 8)`)
         return res.redirect(`/application/${app_id}/overview`)
     })
@@ -479,7 +502,10 @@ app.get("/application/:app_id/:target", checkAuth, async (req, res) => {
             if (!perm[0]) return res.redirect("/application?msg='You don't have permission to manage this applicstion!'")
             if (parseInt(perm[0]) < 8) return res.redirect("/application?msg='You don't have permission to manage this applicstion!'")
             if (req.params.target == 'overview') {
-                return res.render("pages/application/overview", { req: req, application: application[0] })
+                return res.render("pages/application/overview", {
+                    req: req,
+                    application: application[0],
+                })
             } else if (req.params.target == 'perm') {
 
             } else {
