@@ -1,37 +1,48 @@
-const nodemailer = require("nodemailer");
+// const nodemailer = require('nodemailer');
+// const { google } = require('googleapis')
+// const CLIENT_ID = '287750662137-8l43rsp5hkhm5nv1bj6s1hp9bqt1rhiu.apps.googleusercontent.com';
+// const CLEINT_SECRET = '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';
+// const REDIRECT_URI = 'https://developers.google.com/oauthplayground';
+// const REFRESH_TOKEN = '1//04wrQc6fUVVXdCgYIARAAGAQSNwF-L9IrbujiHLIdNaQFM8KPWrkCcf48hN6H4JV2EFq07l8HLUwtqfenU-Fbjxo7zImVoFNAC3M';
 
-// async..await is not allowed in global scope, must use a wrapper
-async function main() {
-    // Generate test SMTP service account from ethereal.email
-    // Only needed if you don't have a real mail account for testing
-    let testAccount = await nodemailer.createTestAccount();
+// const oAuth2Client = new google.auth.OAuth2(
+//   CLIENT_ID,
+//   CLEINT_SECRET,
+//   REDIRECT_URI
+// );
+// oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 
-    // create reusable transporter object using the default SMTP transport
-    let transporter = nodemailer.createTransport({
-        host: "smtp.office365.com",
-        port: 587,
-        secure: false, // true for 465, false for other ports
-        auth: {
-            user: 'nore-reply@letmeauth.xyz', // generated ethereal user
-            pass: 'Norereply@letmeauth2022', // generated ethereal password
-        },
-    });
+// async function sendMail() {
+//   try {
+//     const accessToken = await oAuth2Client.getAccessToken();
 
-    // send mail with defined transport object
-    let info = await transporter.sendMail({
-        from: '"Fred Foo 👻" <foo@example.com>', // sender address
-        to: "petertuananh@hotmail.com", // list of receivers
-        subject: "Hello ✔", // Subject line
-        text: "Hello world?", // plain text body
-        html: "<b>Hello world?</b>", // html body
-    });
+//     const transport = nodemailer.createTransport({
+//       service: 'gmail',
+//       auth: {
+//         type: 'OAuth2',
+//         user: 'noreply.letmeauth@gmail.com',
+//         clientId: CLIENT_ID,
+//         clientSecret: CLEINT_SECRET,
+//         refreshToken: REFRESH_TOKEN,
+//         accessToken: accessToken,
+//       },
+//     });
 
-    console.log("Message sent: %s", info.messageId);
-    // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
+//     const mailOptions = {
+//       from: 'Let Me Auth <yours authorised email noreply.letmeauth@gmail.com>',
+//       to: 'tranthanhduy655@gmail.com',
+//       subject: 'Hello from gmail using API',
+//       text: 'Hello from gmail email using API',
+//       html: '<br>Alo</br>',
+//     };
 
-    // Preview only available when sending through an Ethereal account
-    console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
-    // Preview URL: https://ethereal.email/message/WaQKMgKddxQDoou...
-}
+//     const result = await transport.sendMail(mailOptions);
+//     return result;
+//   } catch (error) {
+//     return error;
+//   }
+// }
 
-main().catch(console.error);
+// sendMail()
+//   .then((result) => console.log('Email sent...', result))
+//   .catch((error) => console.log(error.message));

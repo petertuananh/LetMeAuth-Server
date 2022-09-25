@@ -17,7 +17,7 @@ const passportFacebook = require("passport-facebook");
 const passportGoogle = require("passport-google-oauth2");
 const passportGithub = require("passport-github");
 const passportMicrosoft = require("passport-microsoft");
-
+const { google } = require('googleapis')
 var passport = require('passport');
 var passportLocal = require('passport-local');
 const rateLimitMap = new Map();
@@ -89,7 +89,7 @@ app.use(async (req, res, next) => {
     //     }
     // })
 })
-// raw
+// >
 
 passport.use(new passportDiscord(
     {
@@ -97,7 +97,7 @@ passport.use(new passportDiscord(
         clientSecret: config.oauth.discord.secret,
         callbackURL: `https://letmeauth.xyz/auth/login/discord`,
         scope: ["identify", "guilds", "email"],
-        prompt: 'consent'
+        prompt: 'none'
     },
     (accessToken, refreshToken, profile, done) => {
         con.query(`SELECT * FROM AUTH_SOCIALNETWORK WHERE socialnetwork_id=${profile.id}`, async function (err, urs) {
@@ -524,7 +524,7 @@ app.get("/connections/auth/:target", checkAuth, async (req, res) => {
     }
     await con.query(`DELETE FROM AUTH_SOCIALNETWORK WHERE user_id=${req.user.id} && name="${target}"`)
     if (target == 'discord') {
-        if (!token) return res.redirect("https://discord.com/oauth2/authorize?client_id=1023163031758311444&scope=identify&response_type=code&redirect_uri=https://letmeauth.xyz/connections/auth/discord")
+        if (!token) return res.redirect("https://discord.com/oauth2/authorize?client_id=1023163031758311444&scope=identify&response_type=code&prompt=none&redirect_uri=https://letmeauth.xyz/connections/auth/discord")
         DiscOauth.tokenRequest({
             clientId: config.oauth.discord.id,
             clientSecret: config.oauth.discord.secret,
@@ -638,6 +638,9 @@ function makeInt(length) {
     }
     return result;
 }
+
+
+
 app.listen(config.server.port, () => {
     console.log(`Working at port ${config.server.port}`)
 })

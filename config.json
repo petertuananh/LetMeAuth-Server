@@ -14,6 +14,13 @@
         "google" : {
             "id" : "1042782055649-tl7pbnl6t0qpe7q4e1dhi9vqoslrl1ji.apps.googleusercontent.com",
             "secret" : "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"
+        },
+        "github" : {
+            "id" : "64c720fc06898c31fb31",
+            "secret" : "687f555cf4b99427ad35a902c1d8f2e6c190944b"
+        },
+        "microsoft" : {
+            "id" : "0ef4c44a-b320-4f07-a6f5-4ef14122a3b2"
         }
     },
     "database": {
@@ -28,5 +35,11 @@
             "charset": "utf8mb4_general_ci",
             "connectionLimit" : 1
         }
+    },
+    "mail": {
+        "CLIENT_ID": "287750662137-8l43rsp5hkhm5nv1bj6s1hp9bqt1rhiu.apps.googleusercontent.com",
+        "CLIENT_SECRET": "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",
+        "REDIRECT_URI": "https://developers.google.com/oauthplayground",
+        "REFRESH_TOKEN": "1//04wrQc6fUVVXdCgYIARAAGAQSNwF-L9IrbujiHLIdNaQFM8KPWrkCcf48hN6H4JV2EFq07l8HLUwtqfenU-Fbjxo7zImVoFNAC3M"
     }
 }
