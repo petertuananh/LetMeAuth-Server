@@ -324,6 +324,9 @@ app.get("/register", async (req, res) => {
 
 app.post("/register", async (req, res) => {
     const data = req.body
+    if (!data.email) return res.render("pages/auth/register", { msg: "Missing email" })
+    if (!data.username) return res.render("pages/auth/register", { msg: "Missing username" })
+    if (!data.password) return res.render("pages/auth/register", { msg: "Missing password" })
     con.query(`SELECT * FROM USER WHERE email="${data.email}"`, async function (err, email) {
         if (email[0]) return res.render("pages/auth/register", { msg: "This email is aready in use!" })// ừa
         con.query(`SELECT * FROM USER WHERE username="${data.username}"`, async function (err, username) {

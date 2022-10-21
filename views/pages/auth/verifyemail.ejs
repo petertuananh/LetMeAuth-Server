@@ -1,0 +1,32 @@
+<link rel="stylesheet" href="/assets/css/form.css">
+<link rel="shortcut icon" href="/assets/images/shield.png" />
+<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Rubik:400,700'>
+<body>
+    <!-- partial:index.partial.html -->
+    <div class="login-form">
+        <form method="post" action="/user/setting/2fa?target=enable&secret=<%= twofactor.secret %>">
+            <h1>Verify your email</h1>
+            <div class="content">
+                <div class="input-field">
+                    <p>Email : <%= email %> </p>
+            </div>
+                <div class="input-field">
+                    <input type="text" name="code" placeholder="Code" autocomplete="nope">
+                </div>
+            </div>
+            <div class="action">
+                <button type="submit">Verify</button>
+            </div>
+        </form>
+    </div>
+    <!-- partial -->
+    <script src="/assets/js/login.js"></script>
+
+</body>
+
+</html>
+<script>
+    if ('<%= msg %>' !== 'no') {
+        alert('<%= msg %>')
+    }
+</script>
