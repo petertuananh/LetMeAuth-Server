@@ -27,7 +27,7 @@
         "mysql": {
             "host": "srcscode.xyz",
             "user": "letmeauth",
-            "password": "75tO6dNKxl0NIZu4",
+            "password": "ghAz4wPxBt1REXD",
             "database": "letmeauth",
             "supportBigNumbers": true,
             "bigNumberStrings": true,
